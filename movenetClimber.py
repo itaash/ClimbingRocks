@@ -163,7 +163,7 @@ def getClosestLimbFromHold(holdPosition, keypoints):
     tuple: The position of the closest limb (e.g., (x, y)).
     """
 
-    limbPositions = {"leftHand": keypoints[9], "rightHand": keypoints[10], "leftFoot": keypoints[15], "rightFoot": keypoints[16]"}
+    limbPositions = {"leftHand": keypoints[9], "rightHand": keypoints[10], "leftFoot": keypoints[15], "rightFoot": keypoints[16]}
 
     minDistance = 9999
     closestLimb = None
