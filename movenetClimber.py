@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-from tensorflow.lite.python import interpreter as interpreter_wrapper
+from tensorflow.lite.python import interpreter as interpreterWrapper
 import math
 import time
 import argparse
 import csv
 
 # Load the MoveNet model
-interpreter = interpreter_wrapper.Interpreter(model_path='movenet_lightning_f16.tflite')
+interpreter = interpreterWrapper.Interpreter(model_path="model/movenet_lightning_f16.tflite")
 interpreter.allocate_tensors()
 inputDetails = interpreter.get_input_details()
 outputDetails = interpreter.get_output_details()
@@ -21,11 +21,12 @@ argParser.add_argument("--source", type=str, default=0,
 argParser.add_argument("--frame_skip", type=int, default=0,
                        help="Number of frames to skip between pose analysis (default: 0)")
 argParser.add_argument("--output", type=str, default="output.csv",
-                       help="Path to the output CSV file (default: 'output.csv')")
+                       help="Path to the output CSV file (default: 'data/output.csv')")
 
 args = argParser.parse_args()
 
 csvHeader = ['Timestamp(ms)', 'Center of Gravity X', 'Center of Gravity Y', 'Left Arm Angle', 'Right Arm Angle']
+
 keypointDict = {
     'nose': 0,
     'left_eye': 1,
@@ -45,7 +46,6 @@ keypointDict = {
     'left_ankle': 15,
     'right_ankle': 16
 }
-
 
 for keypointName in keypointDict.keys():
     csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y', f'{keypointName}_Score'])
