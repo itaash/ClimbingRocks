@@ -7,7 +7,7 @@ import argparse
 import csv
 
 # Load the MoveNet model
-interpreter = interpreterWrapper.Interpreter(model_path="model/movenet_lightning_f16.tflite")
+interpreter = interpreterWrapper.Interpreter(model_path="models/movenet_lightning_f16.tflite")
 interpreter.allocate_tensors()
 inputDetails = interpreter.get_input_details()
 outputDetails = interpreter.get_output_details()
@@ -18,9 +18,9 @@ argParser.add_argument("--input", type=str, choices=['i', 'v', 'r'], default='r'
                        help="i: image, v: video, r: real-time (default)")
 argParser.add_argument("--source", type=str, default=0,
                        help="Path to video file or image (e.g., 'video.mp4' or 'image.jpg')")
-argParser.add_argument("--frame_skip", type=int, default=0,
-                       help="Number of frames to skip between pose analysis (default: 0)")
-argParser.add_argument("--output", type=str, default="output.csv",
+argParser.add_argument("--frame_skip", type=int, default=4,
+                       help="Number of frames to skip between pose analysis (default: 4)")
+argParser.add_argument("--output", type=str, default="data/output.csv",
                        help="Path to the output CSV file (default: 'data/output.csv')")
 
 args = argParser.parse_args()
@@ -47,7 +47,22 @@ keypointDict = {
     'right_ankle': 16
 }
 
-for keypointName in keypointDict.keys():
+usefulKeypointDict = {
+    'left_shoulder': 5,
+    'right_shoulder': 6,
+    'left_elbow': 7,
+    'right_elbow': 8,
+    'left_wrist': 9,
+    'right_wrist': 10,
+    'left_hip': 11,
+    'right_hip': 12,
+    'left_knee': 13,
+    'right_knee': 14,
+    'left_ankle': 15,
+    'right_ankle': 16
+}
+
+for keypointName in usefulKeypointDict.keys():
     csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y', f'{keypointName}_Score'])
 
 def saveToCsv(filename, data, header):
@@ -92,9 +107,12 @@ def calculateArmAngles(keypoints, threshold=0.2):
     # Check visibility before calculating angles
     if all(part[2] > threshold for part in [leftShoulder, leftElbow, leftWrist]):
         leftArmAngle = math.degrees(math.atan2(leftWrist[1] - leftElbow[1], leftWrist[0] - leftElbow[0]) - math.atan2(leftShoulder[1] - leftElbow[1], leftShoulder[0] - leftElbow[0]))
+        leftArmAngle = abs(round(leftArmAngle, 2))
+        
 
     if all(part[2] > threshold for part in [rightShoulder, rightElbow, rightWrist]):
         rightArmAngle = math.degrees(math.atan2(rightWrist[1] - rightElbow[1], rightWrist[0] - rightElbow[0]) - math.atan2(rightShoulder[1] - rightElbow[1], rightShoulder[0] - rightElbow[0]))
+        rightArmAngle = abs(round(rightArmAngle, 2))
 
     return leftArmAngle, rightArmAngle
 
@@ -123,8 +141,8 @@ def calculateCenterOfGravity(keypoints, threshold=0.2):
             points += 1
 
     if points > 0:
-        cgX = totalX / points
-        cgY = totalY / points
+        cgX = round (totalX / points, 4)
+        cgY = round (totalY / points, 4)
         return (cgX, cgY)
     else:
         return (None, None)
@@ -222,9 +240,10 @@ def main():
             timestamp = int((time.time() * 1000) - startTime)
 
             frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
-            for keypoint in keypoints:
-                frameRow.extend([keypoint[0], keypoint[1], keypoint[2]])
-
+            for usefulKeypoint in usefulKeypointDict.values():
+                frameRow.extend([round(keypoints[usefulKeypoint][0], 4), 
+                                 round(keypoints[usefulKeypoint][1], 4), 
+                                 round(keypoints[usefulKeypoint][2], 4)])q
             frameData.append(frameRow)
 
             if centerOfGravity:
@@ -236,7 +255,10 @@ def main():
 
             print("Arm angles:\nLeft arm angle: " + str(leftArmAngle) + "\nRight arm angle: " + str(rightArmAngle))
 
-        drawSkeleton(frame, keypoints)
+        try: 
+            drawSkeleton(frame, keypoints)
+        except:
+            pass
         cv2.imshow('MoveNet Skeleton', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
