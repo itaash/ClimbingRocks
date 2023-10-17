@@ -160,4 +160,5 @@ cython_debug/
 #.idea/
 
 # AppData
-/data
+data/
+data/output.csv

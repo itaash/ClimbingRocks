@@ -85,9 +85,7 @@ def drawSkeleton(frame, keypoints, threshold=0.2):
         if score > threshold:
             cv2.circle(frame, (int(y * frame.shape[1]), int(x * frame.shape[0])), 5, (0, 255, 0), -1)
 
-def calculateArmAngles(keypoints, threshold=0.2):
-    # Extract relevant keypoints for both arms
-    
+    # Draw lines for arms
     leftShoulder = keypoints[5]
     leftElbow = keypoints[7]
     leftWrist = keypoints[9]
@@ -95,6 +93,32 @@ def calculateArmAngles(keypoints, threshold=0.2):
     rightShoulder = keypoints[6]
     rightElbow = keypoints[8]
     rightWrist = keypoints[10]
+
+    if all(keypoint[2] > threshold for keypoint in [leftShoulder, leftElbow, leftWrist]):
+        cv2.line(frame, (int(leftShoulder[1] * frame.shape[1]), int(leftShoulder[0] * frame.shape[0])), (int(leftElbow[1] * frame.shape[1]), int(leftElbow[0] * frame.shape[0])), (0, 255, 0), 2)
+
+    if all(keypoint[2] > threshold for keypoint in [rightShoulder, rightElbow, rightWrist]):
+        cv2.line(frame, (int(rightShoulder[1] * frame.shape[1]), int(rightShoulder[0] * frame.shape[0])), (int(rightElbow[1] * frame.shape[1]), int(rightElbow[0] * frame.shape[0])), (0, 255, 0), 2)
+
+def calculateArmAngles(keypoints, threshold=0.2):
+    """
+    Calculate the elbow angle of each arm. The angle is 0 when the hand is touching the shoulder from above.
+
+    Args:
+    keypoints (list): List of keypoints (e.g., [[x, y, score], ...]), typically from the MoveNet model.
+    threshold (float): Minimum confidence score for a keypoint to be considered.
+
+    Returns:
+    tuple: The angle of each arm (e.g., (leftArmAngle, rightArmAngle)). If a keypoint is not visible, the angle is None.
+    """
+    
+    leftShoulder = keypoints[keypointDict['left_shoulder']]
+    leftElbow = keypoints[keypointDict['left_elbow']]
+    leftWrist = keypoints[keypointDict['left_wrist']]
+
+    rightShoulder = keypoints[keypointDict['right_shoulder']]
+    rightElbow = keypoints[keypointDict['right_elbow']]
+    rightWrist = keypoints[keypointDict['right_wrist']]
 
     # Calculate angles for both arms
     # leftArmAngle = math.degrees(math.atan2(leftWrist[1] - leftElbow[1], leftWrist[0] - leftElbow[0]) - math.atan2(leftShoulder[1] - leftElbow[1], leftShoulder[0] - leftElbow[0]))
@@ -130,7 +154,10 @@ def calculateCenterOfGravity(keypoints, threshold=0.2):
     """
     totalX, totalY, points = 0, 0, 0
 
-    cgPoints = {"leftShoulder": keypoints[5], "rightShoulder": keypoints[6], "leftHip": keypoints[11], "rightHip": keypoints[12]}  
+    cgPoints = {"leftShoulder": keypoints[keypointDict['left_shoulder']], 
+                "rightShoulder": keypoints[keypointDict['right_shoulder']], 
+                "leftHip": keypoints[keypointDict['left_hip']], 
+                "rightHip": keypoints[keypointDict['right_hip']]}  
 
     for keypoint in cgPoints.values():
         x, y, score = keypoint[0], keypoint[1], keypoint[2]
@@ -181,7 +208,10 @@ def getClosestLimbFromHold(holdPosition, keypoints):
     tuple: The position of the closest limb (e.g., (x, y)).
     """
 
-    limbPositions = {"leftHand": keypoints[9], "rightHand": keypoints[10], "leftFoot": keypoints[15], "rightFoot": keypoints[16]}
+    limbPositions = {"leftHand": keypoints[keypointDict['left_wrist']], 
+                     "rightHand": keypoints[keypointDict['right_wrist']], 
+                     "leftFoot": keypoints[keypointDict['left_ankle']], 
+                     "rightFoot": keypoints[keypointDict['right_ankle']]}
 
     minDistance = 9999
     closestLimb = None
@@ -243,10 +273,10 @@ def main():
             for usefulKeypoint in usefulKeypointDict.values():
                 frameRow.extend([round(keypoints[usefulKeypoint][0], 4), 
                                  round(keypoints[usefulKeypoint][1], 4), 
-                                 round(keypoints[usefulKeypoint][2], 4)])q
+                                 round(keypoints[usefulKeypoint][2], 4)])
             frameData.append(frameRow)
 
-            if centerOfGravity:
+            if centerOfGravity != (None, None):
                 cgX, cgY = centerOfGravity
                 cgX = int(cgX * frame.shape[0])
                 cgY = int(cgY * frame.shape[1])
