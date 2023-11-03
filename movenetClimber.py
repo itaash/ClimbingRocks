@@ -247,8 +247,8 @@ def getDistanceBetweenLimbHold(limbPosition, holdPosition):
     Calculate the distance between a given limb and hold.
 
     Args:
-    limbPosition (tuple): The position of a limb (e.g., (x, y)).
-    holdPosition (tuple): The position of a hold (e.g., (x, y)).
+    limbPosition (tuple): The position of a limb (e.g., (x, y))
+    holdPosition (tuple): The position of a hold (e.g., (x, y))
 
     Returns:
     float: The distance between the limb and hold.
