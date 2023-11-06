@@ -68,7 +68,7 @@ usefulKeypointDict = {
 }
 
 for keypointName in usefulKeypointDict.keys():
-    csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y', f'{keypointName}_Score'])
+    csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y'])
 
 def saveToCsv(filename, data, header):
     with open(filename, mode='w', newline='') as csvFile:
@@ -85,6 +85,16 @@ def preprocessFrame(frame):
     return inputFrame
 
 def drawSkeleton(frame, keypoints, centerOfGravity, threshold=0.3):
+    """
+    Draw the detected skeleton on a given frame.
+
+    Args:
+    frame (numpy.ndarray): The frame to draw the skeleton on.
+    keypoints (list): List of keypoints (e.g., [[x, y, score], ...]), typically from the MoveNet model.
+    centerOfGravity (tuple): The position of the center of gravity (e.g., (x, y)).
+    threshold (float): Minimum confidence score for a keypoint to be considered.
+    """
+    
     for keypoint in keypoints:
         x, y, score = keypoint[0], keypoint[1], keypoint[2]
         if score > threshold:
@@ -292,13 +302,6 @@ def main():
                 frameRow.extend([round(keypoints[usefulKeypoint][0], 5), 
                                  round(keypoints[usefulKeypoint][1], 5)])
             frameData.append(frameRow)
-
-            # if centerOfGravity != (None, None):
-            #     cgX, cgY = centerOfGravity
-            #     cgX = int(cgX * frame.shape[0])
-            #     cgY = int(cgY * frame.shape[1])
-            #     cv2.circle(frame, (cgY, cgX), 5, (0, 0, 255), -1)
-            #     print(f"Center of gravity: ({cgX}, {cgY})")
 
             print("Arm angles:\nLeft arm angle: " + str(leftArmAngle) + "\nRight arm angle: " + str(rightArmAngle))
 
