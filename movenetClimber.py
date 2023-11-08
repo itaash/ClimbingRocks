@@ -5,6 +5,7 @@ import math
 import time
 import argparse
 import csv
+import statistics
 
 # Load the MoveNet model
 interpreter = interpreterWrapper.Interpreter(model_path="models/movenet_lightning_f16.tflite")
@@ -140,6 +141,67 @@ def calculateArmAngles(keypoints, threshold=0.2):
 
     return leftArmAngle, rightArmAngle
 
+def calculateHandShoulderDistances(keypoints, threshold=0.2):
+    """
+    Calculate the distances between hand keypoints (wrists) and the corresponding shoulders.
+
+    Args:
+    keypoints (list): List of keypoints (e.g., [[x, y, score], ...]) from the MoveNet model.
+    threshold (float): Minimum confidence score for a keypoint to be considered.
+
+    Returns:
+    tuple: The distances between left hand (wrist) and left shoulder, and between right hand (wrist) and right shoulder.
+    If a keypoint is not visible, the distance is None.
+    """
+    leftShoulder = keypoints[keypointDict['left_shoulder']]
+    leftHand = keypoints[keypointDict['left_wrist']]
+    
+    rightShoulder = keypoints[keypointDict['right_shoulder']]
+    rightHand = keypoints[keypointDict['right_wrist']]
+
+    # Initialize distances as None
+    leftHandShoulderDistance = None
+    rightHandShoulderDistance = None
+
+    # Check visibility before calculating distances
+    if all(part[2] > threshold for part in [leftShoulder, leftHand]):
+        leftHandShoulderDistance = math.sqrt((leftHand[0] - leftShoulder[0]) ** 2 + (leftHand[1] - leftShoulder[1]) ** 2)
+        leftHandShoulderDistance = round(leftHandShoulderDistance, 2)
+
+    if all(part[2] > threshold for part in [rightShoulder, rightHand]):
+        rightHandShoulderDistance = math.sqrt((rightHand[0] - rightShoulder[0]) ** 2 + (rightHand[1] - rightShoulder[1]) ** 2)
+        rightHandShoulderDistance = round(rightHandShoulderDistance, 2)
+
+    return leftHandShoulderDistance, rightHandShoulderDistance
+
+def rolling_average_stddev(center_of_gravity_values, window_size=10):
+    """
+    Calculate the rolling average of the standard deviation for a list of center of gravity inputs.
+
+    Args:
+    center_of_gravity (list): List of center of gravity points (e.g., [(x1, y1), (x2, y2), ...]).
+    window_size (int): Size of the rolling window.
+
+    Returns:
+    list: List of rolling standard deviation averages for the center of gravity points.
+    """
+
+    rolling_stddev_avg = []
+    window = []
+    
+    for value in center_of_gravity_values:
+        window.append(value)
+        if len(window) > window_size:
+            window.pop(0)
+
+        if len(window) == window_size:
+            x_values, y_values = zip(*window)
+            x_std_dev = statistics.stdev(x_values)
+            y_std_dev = statistics.stdev(y_values)
+            std_dev_avg = (x_std_dev + y_std_dev) / 2
+            rolling_stddev_avg.append(std_dev_avg)
+
+    return rolling_stddev_avg 
 
 def calculateCenterOfGravity(keypoints, threshold=0.2):
     """
@@ -236,7 +298,7 @@ def getDistanceBetweenLimbHold(limbPosition, holdPosition):
     float: The distance between the limb and hold.
     """
     return np.linalg.norm(np.array(limbPosition) - np.array(holdPosition))
-    
+
 
 def main():
 
@@ -245,6 +307,9 @@ def main():
     frameCounter = 0
     frameData = []
     startTime = time.time() * 1000 # Convert to milliseconds
+    timestamp = 0
+    centerOfGravity_values = []  # List to accumulate center of gravity values
+    rolling_stddev_values = []  # List to accumulate rolling standard deviation values
 
 
     while True:
@@ -265,7 +330,10 @@ def main():
             keypoints = interpreter.get_tensor(int(outputDetails[0]['index']))[0][0]
             
             centerOfGravity = calculateCenterOfGravity(keypoints)
+            centerOfGravity_values.append(centerOfGravity)
+            smoothness = rolling_average_stddev(centerOfGravity,5)
             leftArmAngle, rightArmAngle = calculateArmAngles(keypoints)
+            leftHandShoulderDistance, rightHandShoulderDistance = calculateHandShoulderDistances(keypoints)
 
             timestamp = int((time.time() * 1000) - startTime)
 
@@ -284,15 +352,26 @@ def main():
                 print(f"Center of gravity: ({cgX}, {cgY})")
 
             print("Arm angles:\nLeft arm angle: " + str(leftArmAngle) + "\nRight arm angle: " + str(rightArmAngle))
-
+            print("Arm to shoulder distance: \nLeft: "+ str(leftHandShoulderDistance)+ "\nRight: "+ str(rightHandShoulderDistance) )
         try: 
             drawSkeleton(frame, keypoints)
-        except:
+        except: 
             pass
         cv2.imshow('MoveNet Skeleton', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+        if timestamp > 5000:  # 5 seconds in milliseconds
+                rolling_stddev = rolling_average_stddev(centerOfGravity_values, window_size=10)
+                rolling_stddev_values.extend(rolling_stddev)
+                centerOfGravity_values = centerOfGravity_values[-10:]  # Keep the last 10 values
+                
+                for std_dev in rolling_stddev:
+                        print(f"Smoothness score: {std_dev}")
+
+                timestamp = 0
+                rolling_stddev_values.clear()
 
     saveToCsv(args.output, frameData, csvHeader)
 
