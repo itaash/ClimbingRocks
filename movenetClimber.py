@@ -5,7 +5,6 @@ import math
 import time
 import argparse
 import csv
-import statistics
 
 # Load the MoveNet model
 interpreter = interpreterWrapper.Interpreter(model_path="models/movenet_lightning_f16.tflite")
@@ -15,14 +14,25 @@ outputDetails = interpreter.get_output_details()
 
 # Argument parsing
 argParser = argparse.ArgumentParser(description="Real-time or video-based MoveNet pose analysis.")
-argParser.add_argument("--input", type=str, choices=['i', 'v', 'r'], default='r',
+argParser.add_argument('-i', '--input', type=str, choices=['i', 'v', 'r'], default='r',
                        help="i: image, v: video, r: real-time (default)")
-argParser.add_argument("--source", type=str, default=0,
+argParser.add_argument('-s', '--source', type=str, default=0,
                        help="Path to video file or image (e.g., 'video.mp4' or 'image.jpg')")
-argParser.add_argument("--frame_skip", type=int, default=4,
+argParser.add_argument('-f', '--frame_skip', type=int, default=4,
                        help="Number of frames to skip between pose analysis (default: 4)")
-argParser.add_argument("--output", type=str, default="data/output.csv",
+argParser.add_argument('-o', '--output', type=str, default="data/output.csv",
                        help="Path to the output CSV file (default: 'data/output.csv')")
+argParser.add_argument('-m', '--model', type=str, choices=['t', 'thunder', 'l', 'lightning'], default='l',
+                       help="Model to use (default: 'lightning')")
+
+if argParser.parse_args().model == 'l' or argParser.parse_args().model == 'lightning':
+    interpreter = interpreterWrapper.Interpreter(model_path="models/movenet_lightning_f16.tflite")
+elif argParser.parse_args().model == 't' or argParser.parse_args().model == 'thunder':
+    interpreter = interpreterWrapper.Interpreter(model_path="models/movenet_thunder_f16.tflite")
+# Load the MoveNet model
+interpreter.allocate_tensors()
+inputDetails = interpreter.get_input_details()
+outputDetails = interpreter.get_output_details()
 
 args = argParser.parse_args()
 
@@ -64,7 +74,7 @@ usefulKeypointDict = {
 }
 
 for keypointName in usefulKeypointDict.keys():
-    csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y', f'{keypointName}_Score'])
+    csvHeader.extend([f'{keypointName}_X', f'{keypointName}_Y'])
 
 def saveToCsv(filename, data, header):
     with open(filename, mode='w', newline='') as csvFile:
@@ -74,17 +84,34 @@ def saveToCsv(filename, data, header):
 
 def preprocessFrame(frame):
     inputFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    inputFrame = cv2.resize(inputFrame, (192, 192))
+    inputFrame = cv2.resize(inputFrame, inputDetails[0]['shape'][1:3])
     inputFrame = np.expand_dims(inputFrame, axis=0)
     inputFrame = (inputFrame.astype(np.uint8))
-    inputFrame = ((inputFrame / 255.0) * 255).astype(np.uint8)
+    # inputFrame = ((inputFrame / 255.0) * 255).astype(np.uint8)
     return inputFrame
 
-def drawSkeleton(frame, keypoints, threshold=0.2):
+def drawSkeleton(frame, keypoints, centerOfGravity, threshold=0.3):
+    """
+    Draw the detected skeleton on a given frame.
+
+    Args:
+    frame (numpy.ndarray): The frame to draw the skeleton on.
+    keypoints (list): List of keypoints (e.g., [[x, y, score], ...]), typically from the MoveNet model.
+    centerOfGravity (tuple): The position of the center of gravity (e.g., (x, y)).
+    threshold (float): Minimum confidence score for a keypoint to be considered.
+    """
+    
     for keypoint in keypoints:
         x, y, score = keypoint[0], keypoint[1], keypoint[2]
         if score > threshold:
             cv2.circle(frame, (int(y * frame.shape[1]), int(x * frame.shape[0])), 5, (0, 255, 0), -1)
+
+    # Draw center of gravity
+    if centerOfGravity != (None, None):
+        cgX, cgY = centerOfGravity
+        cgX = int(cgX * frame.shape[0])
+        cgY = int(cgY * frame.shape[1])
+        cv2.circle(frame, (cgY, cgX), 5, (0, 0, 255), -1)
 
     # Draw lines for arms
     leftShoulder = keypoints[5]
@@ -95,13 +122,19 @@ def drawSkeleton(frame, keypoints, threshold=0.2):
     rightElbow = keypoints[8]
     rightWrist = keypoints[10]
 
-    if all(keypoint[2] > threshold for keypoint in [leftShoulder, leftElbow, leftWrist]):
+    if all(keypoint[2] > threshold for keypoint in [leftShoulder, leftElbow]):
         cv2.line(frame, (int(leftShoulder[1] * frame.shape[1]), int(leftShoulder[0] * frame.shape[0])), (int(leftElbow[1] * frame.shape[1]), int(leftElbow[0] * frame.shape[0])), (0, 255, 0), 2)
+    if all(keypoint[2] > threshold for keypoint in [leftElbow, leftWrist]):       
+        cv2.line(frame, (int(leftElbow[1] * frame.shape[1]), int(leftElbow[0] * frame.shape[0])), (int(leftWrist[1] * frame.shape[1]), int(leftWrist[0] * frame.shape[0])), (0, 255, 0), 2)
 
-    if all(keypoint[2] > threshold for keypoint in [rightShoulder, rightElbow, rightWrist]):
+    if all(keypoint[2] > threshold for keypoint in [rightShoulder, rightElbow]):
         cv2.line(frame, (int(rightShoulder[1] * frame.shape[1]), int(rightShoulder[0] * frame.shape[0])), (int(rightElbow[1] * frame.shape[1]), int(rightElbow[0] * frame.shape[0])), (0, 255, 0), 2)
+    if all(keypoint[2] > threshold for keypoint in [rightElbow, rightWrist]):       
+        cv2.line(frame, (int(rightElbow[1] * frame.shape[1]), int(rightElbow[0] * frame.shape[0])), (int(rightWrist[1] * frame.shape[1]), int(rightWrist[0] * frame.shape[0])), (0, 255, 0), 2)
 
-def calculateArmAngles(keypoints, threshold=0.2):
+
+
+def calculateArmAngles(keypoints, threshold=0.3):
     """
     Calculate the elbow angle of each arm. The angle is 0 when the hand is touching the shoulder from above.
 
@@ -203,7 +236,7 @@ def rolling_average_stddev(center_of_gravity_values, window_size=10):
 
     return rolling_stddev_avg 
 
-def calculateCenterOfGravity(keypoints, threshold=0.2):
+def calculateCenterOfGravity(keypoints, threshold=0.3):
     """
     Calculate the center of gravity of the body.
 
@@ -230,8 +263,8 @@ def calculateCenterOfGravity(keypoints, threshold=0.2):
             points += 1
 
     if points > 0:
-        cgX = round (totalX / points, 4)
-        cgY = round (totalY / points, 4)
+        cgX = round (totalX / points, 5)
+        cgY = round (totalY / points, 5)
         return (cgX, cgY)
     else:
         return (None, None)
@@ -339,25 +372,19 @@ def main():
 
             frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
             for usefulKeypoint in usefulKeypointDict.values():
-                frameRow.extend([round(keypoints[usefulKeypoint][0], 4), 
-                                 round(keypoints[usefulKeypoint][1], 4), 
-                                 round(keypoints[usefulKeypoint][2], 4)])
+                frameRow.extend([round(keypoints[usefulKeypoint][0], 5), 
+                                 round(keypoints[usefulKeypoint][1], 5)])
             frameData.append(frameRow)
-
-            if centerOfGravity != (None, None):
-                cgX, cgY = centerOfGravity
-                cgX = int(cgX * frame.shape[0])
-                cgY = int(cgY * frame.shape[1])
-                cv2.circle(frame, (cgY, cgX), 5, (0, 0, 255), -1)
-                print(f"Center of gravity: ({cgX}, {cgY})")
 
             print("Arm angles:\nLeft arm angle: " + str(leftArmAngle) + "\nRight arm angle: " + str(rightArmAngle))
             print("Arm to shoulder distance: \nLeft: "+ str(leftHandShoulderDistance)+ "\nRight: "+ str(rightHandShoulderDistance) )
         try: 
             drawSkeleton(frame, keypoints)
-        except: 
+        except:
             pass
         cv2.imshow('MoveNet Skeleton', frame)
+        
+        time.sleep(0.06)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
