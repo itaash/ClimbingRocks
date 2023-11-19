@@ -1,8 +1,12 @@
 
-import sys, os
+import sys, os, time
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtGui import QFontDatabase, QFont
+
+
 from UI.SplashScreen import SplashScreen
+from UI.LobbyScreen import LobbyScreen
 from DataCapture.CameraSender import CameraSender
 from error import *
 
@@ -11,18 +15,30 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Climbing Rocks")
         self.setFixedSize(1280, 800)
-        self.setStyleSheet("background-color: #222222;")
-        
-        splashScreen = SplashScreen(self)
-        self.setCentralWidget(splashScreen)
+        self.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
 
-        # Create camera sender thread
+        self.splashScreen = SplashScreen(self)
+        self.setCentralWidget(self.splashScreen)
+
+        # flags
+        self.firstFrameReceived = False
+        self.cameraConnected = False
+
         try:
-            self.cameraSender = CameraSender()
+            # Create camera sender thread
+            self.cameraSender = CameraSender(self)
             self.cameraSender.frameSignal.connect(self.updateFrame)
             self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
+            self.splashScreen.setProgress(30)
             self.cameraSender.start()
-            splashScreen.setProgress(50)
+    
+
+            # Load font
+            if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
+                raise FontError("Could not load font")
+            else:
+                self.setFont(QFont("DM Sans"))
+            self.splashScreen.setProgress(40)
 
         except CameraNotFoundError as e:
             self.splashScreen.setError(str(e))
@@ -30,12 +46,40 @@ class MainWindow(QMainWindow):
             timer.singleShot(10000, sys.exit)
             pass
 
+        except FontError as e:
+            self.splashScreen.setError(str(e))
+            timer = QTimer()
+            timer.singleShot(10000, sys.exit)
+            pass
+
+        except Error as e:
+            self.splashScreen.setError(str(e))
+            timer = QTimer()
+            timer.singleShot(10000, sys.exit)
+            pass
+
+
+    @pyqtSlot()
     def updateFrame(self):
         # to implement
         pass
-
+    
+    @pyqtSlot(bool)
     def handleCameraConnection(self, connected):
-        # to implement
+        self.cameraConnected = connected
+        if not self.cameraConnected:
+            self.splashScreen.setError("Failed to connect to camera. Please check your camera connection and try again.")
+            timer = QTimer()
+            timer.singleShot(10000, sys.exit)
+        else:
+            if not self.firstFrameReceived:
+                for i in range(self.splashScreen.getProgress(), 95):
+                    self.splashScreen.setProgress(i)
+                    time.sleep(0.01)
+                self.firstFrameReceived = True
+                self.lobbyScreen = LobbyScreen(self)
+                self.splashScreen.setParent(None)
+                self.setCentralWidget(self.lobbyScreen)
         pass
         
 

@@ -11,8 +11,8 @@ class CameraSender(QThread):
     frameSignal = pyqtSignal()
     cameraConnectSignal = pyqtSignal(bool)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self , parent=None):
+        super().__init__(parent=None)
         self.frame = None
         # self.publisher = client
         self.cap = cv2.VideoCapture(0)
@@ -24,8 +24,24 @@ class CameraSender(QThread):
             self.cap.release()
             self.cameraConnectSignal.emit(self.cameraConnected)
             raise CameraNotFoundError(errMsg)
+        else:
+            logging.info("Camera connected.")
+            self.cameraConnectSignal.emit(self.cameraConnected)
 
     def run(self):
+        time.sleep(0.3)
+
+        if not self.cameraConnected:
+            errMsg = "Failed to connect to camera"
+            logging.info(errMsg)
+            self.cap.release()
+            self.cameraConnectSignal.emit(self.cameraConnected)
+            raise CameraNotFoundError(errMsg)
+        else:
+            logging.info("Camera connected.")
+            self.cameraConnectSignal.emit(self.cameraConnected)
+
+        
 
         while True:
             ret, frame = self.cap.read()

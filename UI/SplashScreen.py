@@ -48,6 +48,9 @@ class SplashScreen(QWidget):
         layout.addStretch(1)
         self.setLayout(layout)
 
+    def getProgress(self):
+        return self._progressBar.value()
+    
     def setProgress(self, value: int):
         self._progressBar.setValue(value)
 
