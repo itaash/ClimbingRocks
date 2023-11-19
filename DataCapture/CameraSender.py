@@ -18,6 +18,9 @@ class CameraSender(QThread):
         self.cap = cv2.VideoCapture(0)
         self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         self.cameraConnected=self.cap.isOpened()
+        # self.frame is initially an image
+        self.frame = cv2.cvtColor(cv2.imread("UI/UIAssets/TechnicalDifficulties.png"), cv2.COLOR_BGR2GRAY)
+
         if not self.cameraConnected:
             errMsg = "Failed to connect to camera"
             logging.info(errMsg)

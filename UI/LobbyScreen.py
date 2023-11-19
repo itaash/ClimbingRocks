@@ -6,8 +6,8 @@ from PyQt5.QtCore import Qt
 
 
 class LobbyScreen(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent=None)
+    def __init__(self, parent):
+        super().__init__(parent)
         
         # Set up the horizontal layout
         hLayout = QHBoxLayout()
@@ -61,6 +61,8 @@ class LobbyScreen(QWidget):
         # Connect the textChanged signal to enable/disable the start button
         self.nameInput.textChanged.connect(self.updateStartButton)
 
+        self.callable = parent.goToHoldFindingScreen
+
     def setupLeaderboard(self):
         # Read data from CSV file and populate the leaderboard table
         # Assuming a CSV file structure with columns: Rank, Name, Score, Level, Date
@@ -98,12 +100,17 @@ class LobbyScreen(QWidget):
         # Get the user's name from the input field
         userName = self.nameInput.text()
 
+        print(f"Starting climbing session for {userName}")
+
+        self.callable()  # Call the callback function
+
         # Perform any actions needed before starting the climbing session
         # For example, you can save the user's name or perform validation
 
         # Start the climbing session or transition to the next screen
-        print(f"Starting climbing session for {userName}")
         # Add your logic to transition to the next screen or perform other actions
+
+    getClimberName = lambda self: self.nameInput.text()
 
 # Example usage:
 # lobbyScreen = LobbyScreen()

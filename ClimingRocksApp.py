@@ -7,6 +7,7 @@ from PyQt5.QtGui import QFontDatabase, QFont
 
 from UI.SplashScreen import SplashScreen
 from UI.LobbyScreen import LobbyScreen
+from UI.HoldFindingScreen import HoldFindingScreen
 from DataCapture.CameraSender import CameraSender
 from error import *
 
@@ -58,6 +59,12 @@ class MainWindow(QMainWindow):
             timer.singleShot(10000, sys.exit)
             pass
 
+    def goToHoldFindingScreen(self):
+        self.holdFindingScreen = HoldFindingScreen(self)
+        currentClimber = self.lobbyScreen.getClimberName()
+        self.lobbyScreen.setParent(None)
+        self.setCentralWidget(self.holdFindingScreen)
+
 
     @pyqtSlot()
     def updateFrame(self):
@@ -73,9 +80,9 @@ class MainWindow(QMainWindow):
             timer.singleShot(10000, sys.exit)
         else:
             if not self.firstFrameReceived:
-                for i in range(self.splashScreen.getProgress(), 95):
-                    self.splashScreen.setProgress(i)
-                    time.sleep(0.01)
+                #for i in range(self.splashScreen.getProgress(), 95):
+                #    self.splashScreen.setProgress(i)
+                #    time.sleep(0.01)
                 self.firstFrameReceived = True
                 self.lobbyScreen = LobbyScreen(self)
                 self.splashScreen.setParent(None)
@@ -88,6 +95,7 @@ class MainWindow(QMainWindow):
 if __name__ == '__main__':
     
     app = QApplication(sys.argv)
+    # app.setWindowIcon(app.style().standardIcon(getattr(QStyle, 'SP_DesktopIcon')))
     mainWindow = MainWindow()
     mainWindow.show()
     
