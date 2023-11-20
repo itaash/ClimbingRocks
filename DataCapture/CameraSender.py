@@ -3,6 +3,7 @@ import logging
 import argparse
 import cv2
 import time
+import threading
 
 from error import CameraNotFoundError
 
@@ -16,10 +17,10 @@ class CameraSender(QThread):
         self.frame = None
         # self.publisher = client
         self.cap = cv2.VideoCapture(0)
-        self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-        self.cameraConnected=self.cap.isOpened()
-        # self.frame is initially an image
-        self.frame = cv2.cvtColor(cv2.imread("UI/UIAssets/TechnicalDifficulties.png"), cv2.COLOR_BGR2GRAY)
+        self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        self.cameraConnected = self.cap.isOpened()
+        self.frame = None
+        self.frameSemaphore = threading.Semaphore(1)
 
         if not self.cameraConnected:
             errMsg = "Failed to connect to camera"
@@ -66,7 +67,9 @@ class CameraSender(QThread):
             _, buffer = cv2.imencode('.jpg', frame)
 
             # Store the latest frame
+            self.frameSemaphore.acquire()
             self.frame = buffer.tobytes()
+            self.frameSemaphore.release()
 
             # Emit the frame captured signal to notify the GUI thread
             self.frameSignal.emit()
@@ -80,4 +83,7 @@ class CameraSender(QThread):
         # self.publisher.disconnect()
 
     def getFrame(self):
-        return self.frame
+        self.frameSemaphore.acquire()
+        frame = self.frame
+        self.frameSemaphore.release()
+        return frame

@@ -15,6 +15,7 @@ class SplashScreen(QWidget):
         # Create logo label
         splashImage = QPixmap("UI/UIAssets/logo.png")
         self.imageLabel = QLabel(self)
+        self.imageLabel.setAlignment(Qt.AlignHCenter)
         self.imageLabel.setPixmap(splashImage.scaled(QSize(int(parent.width()*0.7), int(parent.height()*0.7)), Qt.AspectRatioMode.KeepAspectRatio))
 
         # Create progress bar
@@ -54,7 +55,23 @@ class SplashScreen(QWidget):
     def setProgress(self, value: int):
         self._progressBar.setValue(value)
 
-    def showErrorMessage(self, message: str):
+    def setError(self, message: str):
         self.splashText.setText("<font color='red'>Error: </font>" + message)
         self._progressBar.setStyleSheet("QProgressBar { border: none; background-color: #BFBFBF; height: 20px; border-radius: 10px; }"
                                        "QProgressBar::chunk { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #B81F1F, stop:1 #FF4E4E); border-radius: 10px; }")
+
+
+if __name__ == "__main__":
+    import sys
+    from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
+
+    app = QApplication(sys.argv)
+    window = QMainWindow()
+    window.setWindowTitle("Climbing Rocks")
+    window.setFixedSize(1280, 800)
+    
+    splashScreen = SplashScreen(window)
+    window.setCentralWidget(splashScreen)
+    window.show()
+    
+    sys.exit(app.exec_())

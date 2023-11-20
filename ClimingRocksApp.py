@@ -26,20 +26,21 @@ class MainWindow(QMainWindow):
         self.cameraConnected = False
 
         try:
-            # Create camera sender thread
-            self.cameraSender = CameraSender(self)
-            self.cameraSender.frameSignal.connect(self.updateFrame)
-            self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
-            self.splashScreen.setProgress(30)
-            self.cameraSender.start()
-    
 
             # Load font
             if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
                 raise FontError("Could not load font")
             else:
                 self.setFont(QFont("DM Sans"))
+            self.splashScreen.setProgress(30)
+
+            # Create camera sender thread
+            self.cameraSender = CameraSender(self)
+            self.cameraSender.frameSignal.connect(self.updateFrame)
+            self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
             self.splashScreen.setProgress(40)
+            self.cameraSender.start()
+
 
         except CameraNotFoundError as e:
             self.splashScreen.setError(str(e))
