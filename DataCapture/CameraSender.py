@@ -1,7 +1,8 @@
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread, QRect
+from PyQt5.QtGui import QPixmap, QImage
 import logging
 import argparse
-import cv2
+import cv2, sys
 import time
 import threading
 
@@ -68,7 +69,8 @@ class CameraSender(QThread):
 
             # Store the latest frame
             self.frameSemaphore.acquire()
-            self.frame = buffer.tobytes()
+            # self.frame = buffer.tobytes()
+            self.frame = frame
             self.frameSemaphore.release()
 
             # Emit the frame captured signal to notify the GUI thread

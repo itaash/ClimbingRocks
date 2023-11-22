@@ -232,6 +232,8 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication, QMainWindow
     from PyQt5.QtGui import QFontDatabase
 
+    # sys.path.append('C:\Users\itaas\Documents\UBC\Year 4 (2023-2024)\IGEN 430\ClimbingRocks')   
+
     app = QApplication(sys.argv)
 
 

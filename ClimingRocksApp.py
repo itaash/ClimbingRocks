@@ -1,8 +1,8 @@
 
-import sys, os, time
+import sys, os, time, cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
-from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QThread
-from PyQt5.QtGui import QFontDatabase, QFont
+from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QThread, QRect
+from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QImage
 
 
 from UI.SplashScreen import SplashScreen
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.firstFrameReceived = False
         self.cameraConnected = False
 
-        try:
+        try:    
 
             # Load font
             if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
@@ -40,7 +40,6 @@ class MainWindow(QMainWindow):
             self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
             self.splashScreen.setProgress(40)
             self.cameraSender.start()
-
 
         except CameraNotFoundError as e:
             self.splashScreen.setError(str(e))
@@ -69,7 +68,6 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def updateFrame(self):
-        # to implement
         pass
     
     @pyqtSlot(bool)
@@ -81,9 +79,9 @@ class MainWindow(QMainWindow):
             timer.singleShot(10000, sys.exit)
         else:
             if not self.firstFrameReceived:
-                #for i in range(self.splashScreen.getProgress(), 95):
-                #    self.splashScreen.setProgress(i)
-                #    time.sleep(0.01)
+                for i in range(self.splashScreen.getProgress(), 95):
+                    self.splashScreen.setProgress(i)
+                    time.sleep(0.01)
                 self.firstFrameReceived = True
                 self.lobbyScreen = LobbyScreen(self)
                 self.splashScreen.setParent(None)
