@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStackedLayout
 from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect
+from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect, QSize
 import cv2
 
 class HoldFindingScreen(QWidget):
@@ -26,27 +26,25 @@ class HoldFindingScreen(QWidget):
         
         # clear area image
         self.clearAreaLabel = QLabel(self)
-        clearAreaImage = QPixmap("UI/UIAssets/ClearArea.png")
+        self.clearAreaLabel.setFixedSize(parent.width()//2, parent.height()//2)
+        clearAreaImage = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/ClearArea.png"), parent.width()//2, Qt.SmoothTransformation)
         self.clearAreaLabel.setPixmap(clearAreaImage)
-        self.clearAreaLabel.setAlignment(Qt.AlignHCenter)
-        # self.clearAreaLabel.setStyleSheet("background-color: 'transparent';")
+        self.clearAreaLabel.setAlignment(Qt.AlignCenter)
+        self.clearAreaLabel.setStyleSheet("background-color: 'transparent';")
         # move the clear area image to the center of the screen
-        self.clearAreaLabel.setGeometry(QRect((self.width() - self.clearAreaLabel.width()) // 2, 
-                                              (self.height() - self.clearAreaLabel.height()) // 2, 
-                                              self.clearAreaLabel.width(), 
-                                              self.clearAreaLabel.height()))
+        self.clearAreaLabel.move((parent.width() - self.clearAreaLabel.width()) // 2,
+                                (parent.height() - self.clearAreaLabel.height()) // 4)
 
         # Create status label
         self.statusLabel = QLabel(self)
-        statusPixmap = QPixmap("UI/UIAssets/SearchingForHolds.png")
+        self.statusLabel.setFixedSize(parent.width()//3, parent.height()//5)
+        statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
         self.statusLabel.setPixmap(statusPixmap)
-        self.statusLabel.setAlignment(Qt.AlignHCenter)
-        # self.statusLabel.setStyleSheet("background-color: 'transparent';")
+        self.statusLabel.setAlignment(Qt.AlignCenter)
+        self.statusLabel.setStyleSheet("background-color: 'transparent';")
         # move the status label to the bottom center of the screen
-        self.statusLabel.setGeometry(QRect((self.width() - self.statusLabel.width()) // 2, 
-                                            self.height() - self.statusLabel.height() - 40, 
-                                            self.statusLabel.width(), 
-                                            self.statusLabel.height()))        
+        self.statusLabel.move((parent.width() - self.statusLabel.width()) // 2,
+                              parent.height() - self.statusLabel.height() - 40)        
 
         # Set up the camera sender
         self.cameraSender = parent.cameraSender
@@ -68,9 +66,9 @@ class HoldFindingScreen(QWidget):
             # Convert the frame data to a QImage
             frame = QImage(frameData, self.cameraSender.resolution[0], self.cameraSender.resolution[1], QImage.Format_BGR888)
             # Convert the QImage to a QPixmap
-            pixmap = QPixmap.fromImage(frame)
-            # pixmap=pixmap.scaledToWidth(self.width())
-            frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
+            pixmap = QPixmap(frame)
+            pixmap=QPixmap.scaledToWidth(pixmap, round(self.width()*0.9), Qt.SmoothTransformation)
+            # frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
             # pixmap=pixmap.copy(frameRect)
 
             # Display the QImage in the QLabel

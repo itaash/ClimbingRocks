@@ -2,7 +2,7 @@ import csv, random
 from operator import itemgetter
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QScrollArea, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
@@ -17,21 +17,21 @@ class LeaderboardWidget(QWidget):
 
         # Create rounded rectangle background
         background = QLabel(self)
-        background.setStyleSheet("background-color: #87509e; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; opacity: 75;")
+        background.setStyleSheet("background-color: #222222; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; opacity: 75;")
         background.setFixedSize(self.width(), self.height())
 
         # Create labels for position, name, and score
         positionLabel = QLabel(str(position), self)
         positionLabel.setAlignment(Qt.AlignHCenter| Qt.AlignVCenter)
-        positionLabel.setStyleSheet("background-color: 'transparent'; color: #000; font-weight: 500; line-height: 15px;")
+        positionLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
 
         nameLabel = QLabel(name, self)
         nameLabel.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-        nameLabel.setStyleSheet("background-color: 'transparent'; color: #000; font-weight: 500; line-height: 15px;")
+        nameLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
 
         scoreLabel = QLabel(str(score), self)
         scoreLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-        scoreLabel.setStyleSheet("background-color: 'transparent'; color: #000; font-weight: 500; line-height: 15px;")
+        scoreLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
 
         # Create the layout for the widget
         layout = QHBoxLayout(self)
@@ -65,12 +65,13 @@ class LobbyScreen(QWidget):
 
         # Create the leaderboard label
         leaderboardLabel = QLabel("Leaderboard", alignment=Qt.AlignHCenter)
-        leaderboardLabel.setStyleSheet("font-size: 24px; font-weight: bold;")
+        leaderboardLabel.setStyleSheet("font-size: 24px; font-weight: bold; color: #000;")
 
         # Create a scroll area for the leaderboard
         leaderboardScrollArea = QScrollArea()
         leaderboardScrollArea.setWidgetResizable(True)
         leaderboardScrollArea.setFixedWidth(400)
+        leaderboardScrollArea.setFixedHeight(500)
         leaderboardScrollArea.setStyleSheet("border: 0px")
         leaderboardScrollWidget = QWidget()
         leaderboardScrollArea.setWidget(leaderboardScrollWidget)
@@ -91,7 +92,7 @@ class LobbyScreen(QWidget):
             }
 
             QScrollBar::handle:vertical {
-                background: #87509e;  /* Scroll pill color */
+                background: #222222;  /* Scroll pill color */
                 min-height: 20px;  /* Height of the scroll pill */
                 border-radius: 10px;
             }
@@ -113,17 +114,17 @@ class LobbyScreen(QWidget):
         leaderboardLayout.addWidget(leaderboardScrollArea)
         leaderboardLayout.addStretch(1)
 
-                # Create shadow effect for leaderboardLayout
+        # Create shadow effect for leaderboardLayout
         shadow_effect = QGraphicsDropShadowEffect()
-        shadow_effect.setBlurRadius(10)
-        shadow_effect.setColor(Qt.black)
+        shadow_effect.setBlurRadius(30)
+        shadow_effect.setColor(QColor('#87509e'))
         shadow_effect.setOffset(0, 0)
 
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
         leaderboardWrapper.setFixedHeight(leaderboardLabel.height() + leaderboardScrollWidget.visibleRegion().boundingRect().height()+20)
-        leaderboardWrapper.setStyleSheet("border-radius: 10px;")
+        leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #87509e;")
         leaderboardWrapper.setLayout(leaderboardLayout)
         leaderboardWrapper.setGraphicsEffect(shadow_effect)
 
