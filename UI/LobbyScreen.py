@@ -2,7 +2,7 @@ import csv, random
 from operator import itemgetter
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QScrollArea, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QPixmap
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
@@ -71,7 +71,7 @@ class LobbyScreen(QWidget):
         leaderboardScrollArea = QScrollArea()
         leaderboardScrollArea.setWidgetResizable(True)
         leaderboardScrollArea.setFixedWidth(400)
-        leaderboardScrollArea.setFixedHeight(500)
+        # leaderboardScrollArea.viewport().setFixedHeight(500)
         leaderboardScrollArea.setStyleSheet("border: 0px")
         leaderboardScrollWidget = QWidget()
         leaderboardScrollArea.setWidget(leaderboardScrollWidget)
@@ -85,16 +85,17 @@ class LobbyScreen(QWidget):
         # Customize the scroll bar style
         scroll_bar_style = """
             QScrollBar:vertical {
-                border: 0px;  /* Border color */
-                background: 'transparent' ;  /* Background color */
-                width: 10px;  /* Width of the scroll bar */
+                background-color: #2A2929;
+                width: 15px;
+                margin: 15px 3px 15px 3px;
+                border: 1px transparent #2A2929;
                 border-radius: 5px;
             }
 
             QScrollBar::handle:vertical {
                 background: #222222;  /* Scroll pill color */
-                min-height: 20px;  /* Height of the scroll pill */
-                border-radius: 10px;
+                min-height: 15px;  /* Height of the scroll pill */
+                border-radius: 5px;
             }
 
             QScrollBar::add-line:vertical {
@@ -111,20 +112,21 @@ class LobbyScreen(QWidget):
         leaderboardScrollArea.verticalScrollBar().setStyleSheet(scroll_bar_style)
 
         leaderboardLayout.addWidget(leaderboardLabel)
+        leaderboardLayout.addSpacing(20)
         leaderboardLayout.addWidget(leaderboardScrollArea)
-        leaderboardLayout.addStretch(1)
+        leaderboardLayout.addSpacing(40)
 
         # Create shadow effect for leaderboardLayout
         shadow_effect = QGraphicsDropShadowEffect()
         shadow_effect.setBlurRadius(30)
-        shadow_effect.setColor(QColor('#87509e'))
+        shadow_effect.setColor(QColor('#7148b0'))
         shadow_effect.setOffset(0, 0)
 
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
         leaderboardWrapper.setFixedHeight(leaderboardLabel.height() + leaderboardScrollWidget.visibleRegion().boundingRect().height()+20)
-        leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #87509e;")
+        leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #7148b0;")
         leaderboardWrapper.setLayout(leaderboardLayout)
         leaderboardWrapper.setGraphicsEffect(shadow_effect)
 
@@ -138,7 +140,7 @@ class LobbyScreen(QWidget):
         # Right half: User input and start button
         inputLayout = QVBoxLayout()
         inputLayout.setAlignment(Qt.AlignTop)
-        inputLayout.addSpacing(100)
+        inputLayout.addSpacing(140)
         inputLabel = QLabel("ENTER NAME:")
         # inputLabel.setFixedWidth(400)
         inputLabel.setStyleSheet("font-size: 50px; font-weight: bold;")
@@ -148,15 +150,15 @@ class LobbyScreen(QWidget):
         self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 24px; font-weight: bold; border-radius: 5px; height: 40px; padding-left: 10px;")
         self.nameInput.setPlaceholderText("Nom nom nom")
 
-        self.startButton = QPushButton("Start")
-        self.startButton.setDisabled(True)  # Initially disabled
-        self.startButton.clicked.connect(self.startClimbing)
+        self.startButton = StartButton(self.startClimbing, self)
+        self.startButton.setDisabled(True)
+        self.startButton.move(parent.width() - self.startButton.width() - 60, parent.height() - self.startButton.height() - 60)
 
         inputLayout.addWidget(inputLabel)
         inputLayout.addWidget(self.nameInput)
 
-        inputLayout.addSpacing(50)
-        inputLayout.addWidget(self.startButton)
+        # inputLayout.addSpacing(80)
+        # inputLayout.addWidget(self.startButton, alignment=Qt.AlignRight)
         inputLayout.addStretch(1)
 
         hLayout.addLayout(inputLayout)
@@ -232,8 +234,9 @@ if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication, QMainWindow
     from PyQt5.QtGui import QFontDatabase
+    from Buttons import StartButton
 
-    # sys.path.append('C:\Users\itaas\Documents\UBC\Year 4 (2023-2024)\IGEN 430\ClimbingRocks')   
+    sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)\IGEN 430/ClimbingRocks')   
 
     app = QApplication(sys.argv)
 
@@ -253,3 +256,5 @@ if __name__ == '__main__':
 
     window.show()
     sys.exit(app.exec_())
+else:
+    from UI.Buttons import StartButton

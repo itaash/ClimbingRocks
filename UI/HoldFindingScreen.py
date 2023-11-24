@@ -67,9 +67,9 @@ class HoldFindingScreen(QWidget):
             frame = QImage(frameData, self.cameraSender.resolution[0], self.cameraSender.resolution[1], QImage.Format_BGR888)
             # Convert the QImage to a QPixmap
             pixmap = QPixmap(frame)
-            pixmap=QPixmap.scaledToWidth(pixmap, round(self.width()*0.9), Qt.SmoothTransformation)
-            # frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
-            # pixmap=pixmap.copy(frameRect)
+            # pixmap=QPixmap.scaledToWidth(pixmap, round(self.width()*0.9), Qt.SmoothTransformation)
+            frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
+            pixmap=pixmap.copy(frameRect)
 
             # Display the QImage in the QLabel
             self.liveFeed.setPixmap(pixmap)
