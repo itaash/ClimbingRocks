@@ -53,8 +53,9 @@ class StartButton(QPushButton):
         super().__init__("", parent)
         self.clicked.connect(callback)
         self.setFixedSize(200, 200)
-        self.setStyleSheet("QPushButton { background-image: url(UI/UIAssets/StartButton.png); }")
-        self.setWindowFlags(Qt.WindowStaysOnTopHint| Qt.FramelessWindowHint )  # Make the widget transparent and always on top
+        self.setStyleSheet("QPushButton { background-image: url(UI/UIAssets/StartButton200.png); background-repeat: no-repeat; background-position: center;" 
+                            "border-radius: 25px; }")
+        # self.setWindowFlags(Qt.WindowStaysOnTopHint| Qt.FramelessWindowHint )  # Make the widget transparent and always on top
         
 
 

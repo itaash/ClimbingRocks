@@ -15,6 +15,8 @@ class LeaderboardWidget(QWidget):
         self.setFixedHeight(55)  # Adjust the height as needed
         self.setFixedWidth(350)  # Adjust the width as needed
 
+        self.setFont(QFont("DM Sans"))
+
         # Create rounded rectangle background
         background = QLabel(self)
         background.setStyleSheet("background-color: #222222; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; opacity: 75;")
@@ -31,7 +33,7 @@ class LeaderboardWidget(QWidget):
 
         scoreLabel = QLabel(str(score), self)
         scoreLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-        scoreLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
+        scoreLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 20px;")
 
         # Create the layout for the widget
         layout = QHBoxLayout(self)
@@ -65,14 +67,14 @@ class LobbyScreen(QWidget):
 
         # Create the leaderboard label
         leaderboardLabel = QLabel("Leaderboard", alignment=Qt.AlignHCenter)
-        leaderboardLabel.setStyleSheet("font-size: 24px; font-weight: bold; color: #000;")
+        leaderboardLabel.setStyleSheet("font-size: 40px; font-weight: bold; color: #000; font-family: 'Bungee';")
 
         # Create a scroll area for the leaderboard
         leaderboardScrollArea = QScrollArea()
         leaderboardScrollArea.setWidgetResizable(True)
         leaderboardScrollArea.setFixedWidth(400)
         # leaderboardScrollArea.viewport().setFixedHeight(500)
-        leaderboardScrollArea.setStyleSheet("border: 0px")
+        # leaderboardScrollArea.setStyleSheet("border: 0px")
         leaderboardScrollWidget = QWidget()
         leaderboardScrollArea.setWidget(leaderboardScrollWidget)
         leaderboardScrollLayout = QVBoxLayout(leaderboardScrollWidget)
@@ -85,17 +87,15 @@ class LobbyScreen(QWidget):
         # Customize the scroll bar style
         scroll_bar_style = """
             QScrollBar:vertical {
-                background-color: #2A2929;
-                width: 15px;
-                margin: 15px 3px 15px 3px;
-                border: 1px transparent #2A2929;
-                border-radius: 5px;
+                background: #c58af9;  /* Scroll background */
+                border-radius: 6 px;
+                width: 12px;
             }
 
             QScrollBar::handle:vertical {
                 background: #222222;  /* Scroll pill color */
                 min-height: 15px;  /* Height of the scroll pill */
-                border-radius: 5px;
+                border-radius: 6px;
             }
 
             QScrollBar::add-line:vertical {
@@ -112,21 +112,20 @@ class LobbyScreen(QWidget):
         leaderboardScrollArea.verticalScrollBar().setStyleSheet(scroll_bar_style)
 
         leaderboardLayout.addWidget(leaderboardLabel)
-        leaderboardLayout.addSpacing(20)
         leaderboardLayout.addWidget(leaderboardScrollArea)
-        leaderboardLayout.addSpacing(40)
+        leaderboardLayout.addSpacing(6)
 
         # Create shadow effect for leaderboardLayout
         shadow_effect = QGraphicsDropShadowEffect()
         shadow_effect.setBlurRadius(30)
-        shadow_effect.setColor(QColor('#7148b0'))
+        shadow_effect.setColor(QColor('#c58af9'))
         shadow_effect.setOffset(0, 0)
 
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
-        leaderboardWrapper.setFixedHeight(leaderboardLabel.height() + leaderboardScrollWidget.visibleRegion().boundingRect().height()+20)
-        leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #7148b0;")
+        leaderboardWrapper.setFixedHeight(parent.height() - 170)
+        leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #c58af9;")
         leaderboardWrapper.setLayout(leaderboardLayout)
         leaderboardWrapper.setGraphicsEffect(shadow_effect)
 
@@ -143,7 +142,7 @@ class LobbyScreen(QWidget):
         inputLayout.addSpacing(140)
         inputLabel = QLabel("ENTER NAME:")
         # inputLabel.setFixedWidth(400)
-        inputLabel.setStyleSheet("font-size: 50px; font-weight: bold;")
+        inputLabel.setStyleSheet("font-size: 50px; font-weight: bold; font-family: 'Bungee';")
 
         self.nameInput = QLineEdit()
         self.nameInput.setFixedWidth(400)
@@ -165,7 +164,7 @@ class LobbyScreen(QWidget):
         hLayout.addSpacing(40)
 
         vLayout = QVBoxLayout()
-        vLayout.addSpacing(50)
+        vLayout.addSpacing(30)
         vLayout.addLayout(hLayout)
 
 
@@ -245,10 +244,11 @@ if __name__ == '__main__':
     # Create the main window
     window = QMainWindow()
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
-    window.setFixedSize(1280, 720)  # Set the window size
+    window.setFixedSize(1280, 800)  # Set the window size
     window.setWindowTitle("Climbing Rocks")  # Set the window title
     QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf")
     window.setFont(QFont("DM Sans"))
+    QFontDatabase.addApplicationFont("UI/UIAssets/Bungee.ttf")
 
     # Create the LobbyScreen widget and set it as the central widget
     lobbyScreen = LobbyScreen(window)

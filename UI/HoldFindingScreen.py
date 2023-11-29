@@ -3,9 +3,15 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect, QSize
 import cv2
 
+from object_detection.utils import label_map_util, visualization_utils as viz_utils
+
 class HoldFindingScreen(QWidget):
+    holdsFoundSignal = pyqtSignal()
+
     def __init__(self, parent):
         super().__init__(parent)
+
+        self.parent = parent
 
         self.stackedLayout = QStackedLayout(self)
         self.stackedLayout.setStackingMode(1)
@@ -37,61 +43,109 @@ class HoldFindingScreen(QWidget):
 
         # Create status label
         self.statusLabel = QLabel(self)
-        self.statusLabel.setFixedSize(parent.width()//3, parent.height()//5)
-        statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
-        self.statusLabel.setPixmap(statusPixmap)
+        self.statusLabel.setFixedSize((parent.width()*2)//5, parent.height()//6)
+        # statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
+        # self.statusLabel.setPixmap(statusPixmap)
         self.statusLabel.setAlignment(Qt.AlignCenter)
-        self.statusLabel.setStyleSheet("background-color: 'transparent';")
-        # move the status label to the bottom center of the screen
-        self.statusLabel.move((parent.width() - self.statusLabel.width()) // 2,
-                              parent.height() - self.statusLabel.height() - 40)        
+        self.statusLabel.setStyleSheet(" background-color: 'transparent';"
+                                        "font-size: 20px;"
+                                        "color: #ffffff;"
+                                        "border-radius: 45px;"
+                                        "border: 10px solid #222222;")
+        self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+                                    self.parent.height() - self.statusLabel.height() - 40)
 
         # Set up the camera sender
         self.cameraSender = parent.cameraSender
         self.cameraSender.frameSignal.connect(self.updateLiveFeed)
+
         self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
 
-        # Set up a timer for 3 seconds to trigger FindHolds function
-        self.timer = QTimer(self)
-        self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.findHolds)
-        self.timer.start(3000)
+        # set up the hold finding thread
+        self.holdFindingThread = parent.holdFindingThread
+        if parent.holdFindingModelLoaded:
+            self.onHoldFindingModelLoaded()
+        else:
+            self.holdFindingThread.modelLoaded.connect(self.onHoldFindingModelLoaded)
+
+        # flag to indicate if the holds have been found
+        self.holdsFound = False
+
 
     @pyqtSlot()
     def updateLiveFeed(self):
         # Update the live feed label with the latest frame from the camera
-        frameData = self.cameraSender.getFrame()
 
-        if frameData is not None:
-            # Convert the frame data to a QImage
-            frame = QImage(frameData, self.cameraSender.resolution[0], self.cameraSender.resolution[1], QImage.Format_BGR888)
-            # Convert the QImage to a QPixmap
-            pixmap = QPixmap(frame)
-            # pixmap=QPixmap.scaledToWidth(pixmap, round(self.width()*0.9), Qt.SmoothTransformation)
-            frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
-            pixmap=pixmap.copy(frameRect)
+        if not self.holdsFound:
+            frameData = self.cameraSender.getFrame()
 
-            # Display the QImage in the QLabel
-            self.liveFeed.setPixmap(pixmap)
+            if frameData is not None:
+                # Convert the frame data to a QImage
+                frame = QImage(frameData, self.cameraSender.resolution[0], self.cameraSender.resolution[1], QImage.Format_BGR888)
+                # Convert the QImage to a QPixmap
+                pixmap = QPixmap(frame)
+                # pixmap=QPixmap.scaledToWidth(pixmap, round(self.width()*0.9), Qt.SmoothTransformation)
+                frameRect = QRect(0,int((pixmap.height()-self.height())//2),self.width(),self.height())
+                pixmap=pixmap.copy(frameRect)
 
+                # Display the QImage in the QLabel
+                self.liveFeed.setPixmap(pixmap)
+
+            else:
+                # If the frame is empty, display a black screen
+                self.liveFeed.setPixmap(QPixmap())
         else:
-            # If the frame is empty, display a black screen
-            self.liveFeed.setPixmap(QPixmap())
+            self.liveFeed.setPixmap(self.framePixmapWithHolds)
+            self.clearAreaLabel.hide()
+            QTimer.singleShot(3000, self.holdsFoundSignal.emit)
+
+        if self.parent.holdFindingModelLoaded:
+            self.statusLabel.setFixedSize((self.parent.width()*2)//5, self.parent.height()//8)
+            self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+                                    self.parent.height() - self.statusLabel.height() - 40)
+            if not self.holdsFound:
+                self.statusLabel.setText("Searching for Holds")
+                self.statusLabel.setStyleSheet(
+                    "background-color: #c58af9;"  # purple background
+                    "color: #ffffff;"
+                    "border-radius: 35px;"
+                    "border: 10px solid #962af4;"   # darker purple border
+                    "font-size: 35px;"
+                    "font-family: 'Bungee';"
+                    "font-weight: bold;"
+                )
+            else:
+                self.statusLabel.setText("Holds Found")
+                self.statusLabel.setStyleSheet(
+                    "background-color: #63D451;"  # green background
+                    "color: #ffffff;"
+                    "border-radius: 45px;"
+                    "border: 10px solid #3FB42D;" # darker green border
+                    "font-size: 35px;"
+                    "font-family: 'Bungee';"
+                    "font-weight: bold;"
+                )
+        else:
+            self.statusLabel.setFixedSize((self.parent.width()*2)//4, self.parent.height()//8)
+            self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+                                    self.parent.height() - self.statusLabel.height() - 40)
+            self.statusLabel.setText("Loading Hold-Finding Model")
+            self.statusLabel.setStyleSheet(
+                "background-color: #147A8F;"  # blue background
+                "color: #ffffff;"
+                "border-radius: 45px;"
+                "border: 10px solid #3BC7E3;" # darker blue border
+                "font-size: 30px;"
+                "line-height: 0.5;"
+                "font-family: 'Bungee';"
+                "font-weight: bold;"
+            )
 
     @pyqtSlot(bool)
     def handleCameraConnection(self, connected):
         # Update the status label based on camera connection status
         if connected:
-            """
-            self.statusLabel.setText("Searching for Holds")
-            self.statusLabel.setStyleSheet(
-                "background-color: #3498db;"  # Blue background
-                "color: #ecf0f1;"  # Light text color
-                "border-radius: 15px;"  # Rounded corners
-                "padding: 5px;"  # Padding for pill shape
-            )
-            """
-            pass
+            pass # Do nothing
         else:
             self.statusLabel.setText("Camera Disconnected")
             self.statusLabel.setStyleSheet(
@@ -102,12 +156,25 @@ class HoldFindingScreen(QWidget):
             )
 
     @pyqtSlot()
+    def onHoldFindingModelLoaded(self):
+        """
+        called when the model is loaded
+        """
+        self.parent.holdFindingModelLoaded = True
+
+        # Start timer to find holds
+        self.findHoldsTimer = QTimer(self)
+        self.findHoldsTimer.setSingleShot(True)
+        self.findHoldsTimer.timeout.connect(self.findHolds)
+        self.findHoldsTimer.start(3000)
+
+    @pyqtSlot()
     def findHolds(self):
         # This function is called after the 3-second timer
         # Connect to the FindHolds function with the most recent frame
         frame = self.cameraSender.getFrame()
         # convert the frame to a jpg image
-        frame = cv2.imencode('.jpg', frame)[1].tobytes()
+        # frame = cv2.imencode('.jpg', frame)[1].tobytes()
         # Call FindHolds function with the frame as an argument
         self.findHoldsFunction(frame)
         # Add any additional logic or transitions here
@@ -116,25 +183,98 @@ class HoldFindingScreen(QWidget):
         # Placeholder for the FindHolds function
         # Implement your logic to find holds in the frame
         print("Finding Holds...")
-        # Add your hold detection logic here
-        # Update the status label or perform other actions based on hold detection results
+        self.detections = self.holdFindingThread.runInference(frame)
+        self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections)
+        if self.detections is not None:
+            self.holdsFound = True
+            self.saveDetections(frame)
+    
+    def saveDetections(self, frame, maxHolds = 20, threshold = 0.3):
         """
-        self.statusLabel.setText("Holds Detected")
-        self.statusLabel.setStyleSheet(
-            "background-color: #2ecc71;"  # Green background
-            "color: #ecf0f1;"  # Light text color
-            "border-radius: 15px;"  # Rounded corners
-            "padding: 5px;"  # Padding for pill shape
-        )
+        Save the locations of the detected holds to a file
+
+        Args:
+            frame: The frame that the holds were detected in
+            maxHolds: The maximum number of holds to save
+            threshold: The minimum score threshold for a hold to be saved
+
         """
+        if self.detections is not None:
+            # Drop detections of volumes (class 2)
+            # Assuming 'detection_classes' is a column in self.detections
+            print(self.detections)
+            indicesToKeep = (self.detections['detection_classes'] == 1)
+
+            # Apply boolean indexing to keep only the rows where detection_classes == 1
+            self.detections = self.detections[indicesToKeep]
+
+
+            # Get the coordinates of the detected holds(class 1), not volumes (class 2)
+            boxes = self.detections['detection_boxes']
+            # Get the scores of the detected holds
+            scores = self.detections['detection_scores']
+            # Get the classes of the detected holds
+            classes = self.detections['detection_classes']
+
+            # Get the width and height of the frame
+            height, width, channel = frame.shape
+
+            # Create a list to store the coordinates of the detected holds
+            holdCoordinates = []
+
+            # Iterate through the detected holds
+            for i in range(min(maxHolds, len(boxes))):
+                # If the score of the hold is above the threshold
+                if scores[i] > threshold:
+                    # Get the coordinates of the hold
+                    ymin, xmin, ymax, xmax = boxes[i]
+                    # Convert the coordinates from normalized to pixel coordinates
+                    left, right, top, bottom = xmin * width, xmax * width, ymin * height, ymax * height
+                    # Add the coordinates of the hold to the list
+                    holdCoordinates.append((left, right, top, bottom))
+            
+            # Sort the coordinates of the detected holds by their y-coordinate
+            holdCoordinates.sort(key=lambda x: x[2])
+            
+            # Save the coordinates of the detected holds to a file
+            with open('data/hold_coordinates.csv', 'w') as f:
+                # Iterate through the coordinates of the detected holds
+                for i, (left, right, top, bottom) in enumerate(holdCoordinates):
+                    # Write the coordinates to the file
+                    f.write(f'{i},{left},{right},{top},{bottom}\n')
+
+            
+
+        
+    def getImageWithHoldsVolumes(self, frame, detections):
+        viz_utils.visualize_boxes_and_labels_on_image_array(
+            frame,
+            detections['detection_boxes'],
+            detections['detection_classes'],
+            detections['detection_scores'],
+            label_map_util.create_category_index_from_labelmap(
+                'models/HoldModel/hold-detection_label_map.pbtxt', use_display_name=True),
+            use_normalized_coordinates=True,
+            max_boxes_to_draw=20,
+            min_score_thresh=.30,
+            agnostic_mode=False)
+
+        # Convert image to QImage
+        height, width, channel = frame.shape
+        bytesPerLine = 3 * width
+        qImage = QImage(frame.data, width, height, bytesPerLine, QImage.Format_BGR888)
+        pixmap = QPixmap(qImage)
+
+        return pixmap
 
 if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication, QMainWindow
     from PyQt5.QtGui import QFontDatabase
 
-    sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)/IGEN 430/ClimbingRocks')   
+    sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)/IGEN 430/ClimbingRocks')
     from DataCapture.CameraSender import CameraSender
+    from DataCapture.HoldFinder import HoldFindingThread
 
 
     app = QApplication(sys.argv)
@@ -144,8 +284,13 @@ if __name__ == '__main__':
     window.setWindowTitle("Climbing Rocks")
     window.setFixedSize(1280, 800)
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
+    window.holdFindingModelLoaded = False
     window.cameraSender = CameraSender(window)
     window.cameraSender.start()
+
+    # Create the hold finding thread
+    window.holdFindingThread = HoldFindingThread(window)
+    window.holdFindingThread.start()
 
     # Create the hold finding screen
     holdFindingScreen = HoldFindingScreen(window)
@@ -154,3 +299,6 @@ if __name__ == '__main__':
     # Show the window and run the app
     window.show()
     sys.exit(app.exec_())
+else:
+    from DataCapture.HoldFinder import HoldFindingThread
+    from DataCapture.CameraSender import CameraSender
