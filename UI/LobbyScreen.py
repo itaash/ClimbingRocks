@@ -146,7 +146,7 @@ class LobbyScreen(QWidget):
 
         self.nameInput = QLineEdit()
         self.nameInput.setFixedWidth(400)
-        self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 24px; font-weight: bold; border-radius: 5px; height: 40px; padding-left: 10px;")
+        self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 24px; font-weight: bold; border-radius: 10px; height: 40px; padding-left: 10px;")
         self.nameInput.setPlaceholderText("Nom nom nom")
 
         self.startButton = StartButton(self.startClimbing, self)

@@ -4,6 +4,7 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect, QSize
 import cv2
 
 from object_detection.utils import label_map_util, visualization_utils as viz_utils
+from object_detection.utils import ops as utils_ops
 
 class HoldFindingScreen(QWidget):
     holdsFoundSignal = pyqtSignal()
@@ -74,8 +75,11 @@ class HoldFindingScreen(QWidget):
 
     @pyqtSlot()
     def updateLiveFeed(self):
-        # Update the live feed label with the latest frame from the camera
-
+        """
+        Update the live feed label with the latest frame from the camera sender, or the frame with the holds detected once they have been found
+        Feed is overlayed with the clear area image until the holds are found
+        Feed is overlayed with the status label that updates based on the status of the hold finding model
+        """
         if not self.holdsFound:
             frameData = self.cameraSender.getFrame()
 
@@ -110,7 +114,7 @@ class HoldFindingScreen(QWidget):
                     "color: #ffffff;"
                     "border-radius: 35px;"
                     "border: 10px solid #962af4;"   # darker purple border
-                    "font-size: 35px;"
+                    "font-size: 40px;"
                     "font-family: 'Bungee';"
                     "font-weight: bold;"
                 )
@@ -121,7 +125,7 @@ class HoldFindingScreen(QWidget):
                     "color: #ffffff;"
                     "border-radius: 45px;"
                     "border: 10px solid #3FB42D;" # darker green border
-                    "font-size: 35px;"
+                    "font-size: 40px;"
                     "font-family: 'Bungee';"
                     "font-weight: bold;"
                 )
@@ -187,26 +191,27 @@ class HoldFindingScreen(QWidget):
         self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections)
         if self.detections is not None:
             self.holdsFound = True
-            self.saveDetections(frame)
+            # self.saveDetections(frame)
     
+    """
     def saveDetections(self, frame, maxHolds = 20, threshold = 0.3):
         """
-        Save the locations of the detected holds to a file
+        # Save the locations of the detected holds to a file
 
-        Args:
-            frame: The frame that the holds were detected in
-            maxHolds: The maximum number of holds to save
-            threshold: The minimum score threshold for a hold to be saved
+        # Args:
+        #     frame: The frame that the holds were detected in
+        #     maxHolds: The maximum number of holds to save
+        #     threshold: The minimum score threshold for a hold to be saved
 
-        """
+    """
         if self.detections is not None:
             # Drop detections of volumes (class 2)
-            # Assuming 'detection_classes' is a column in self.detections
-            print(self.detections)
-            indicesToKeep = (self.detections['detection_classes'] == 1)
 
-            # Apply boolean indexing to keep only the rows where detection_classes == 1
-            self.detections = self.detections[indicesToKeep]
+            # investigate why this doesn't work
+            self.detections = self.detections[self.detections['detection_classes'] == 1]
+
+            # sort the detections in descending order of score or possibly distance from center of frame
+            self.detections.sort_values(by=['detection_scores'], ascending=False, inplace=True)
 
 
             # Get the coordinates of the detected holds(class 1), not volumes (class 2)
@@ -222,16 +227,21 @@ class HoldFindingScreen(QWidget):
             # Create a list to store the coordinates of the detected holds
             holdCoordinates = []
 
+            # Create a counter to keep track of the number of holds being saved
+            i = 0
             # Iterate through the detected holds
-            for i in range(min(maxHolds, len(boxes))):
+            while i < min(maxHolds, len(boxes)):
                 # If the score of the hold is above the threshold
-                if scores[i] > threshold:
-                    # Get the coordinates of the hold
-                    ymin, xmin, ymax, xmax = boxes[i]
-                    # Convert the coordinates from normalized to pixel coordinates
-                    left, right, top, bottom = xmin * width, xmax * width, ymin * height, ymax * height
-                    # Add the coordinates of the hold to the list
-                    holdCoordinates.append((left, right, top, bottom))
+                if classes[i] == 1:
+                    if scores[i] > threshold:
+                        # Get the coordinates of the hold
+                        ymin, xmin, ymax, xmax = boxes[i]
+                        # Convert the coordinates from normalized to pixel coordinates
+                        left, right, top, bottom = xmin * width, xmax * width, ymin * height, ymax * height
+                        # Add the coordinates of the hold to the list
+                        holdCoordinates.append((left, right, top, bottom))
+                        i += 1
+
             
             # Sort the coordinates of the detected holds by their y-coordinate
             holdCoordinates.sort(key=lambda x: x[2])
@@ -242,7 +252,7 @@ class HoldFindingScreen(QWidget):
                 for i, (left, right, top, bottom) in enumerate(holdCoordinates):
                     # Write the coordinates to the file
                     f.write(f'{i},{left},{right},{top},{bottom}\n')
-
+    """
             
 
         
@@ -255,7 +265,7 @@ class HoldFindingScreen(QWidget):
             label_map_util.create_category_index_from_labelmap(
                 'models/HoldModel/hold-detection_label_map.pbtxt', use_display_name=True),
             use_normalized_coordinates=True,
-            max_boxes_to_draw=20,
+            max_boxes_to_draw=10,
             min_score_thresh=.30,
             agnostic_mode=False)
 
@@ -275,14 +285,24 @@ if __name__ == '__main__':
     sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)/IGEN 430/ClimbingRocks')
     from DataCapture.CameraSender import CameraSender
     from DataCapture.HoldFinder import HoldFindingThread
+    from error import HoldModelError, CameraNotFoundError, FontError
+    from PyQt5.QtGui import QFontDatabase, QFont
+
 
 
     app = QApplication(sys.argv)
+    
+    if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
+        raise FontError("Could not load font")
+
+    if (QFontDatabase.addApplicationFont("UI/UIAssets/Bungee.ttf") == -1):
+        raise FontError("Could not load font")
 
     # Create the main window
     window = QMainWindow()
     window.setWindowTitle("Climbing Rocks")
     window.setFixedSize(1280, 800)
+    window.setFont(QFont("DM Sans"))
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
     window.holdFindingModelLoaded = False
     window.cameraSender = CameraSender(window)

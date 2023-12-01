@@ -64,6 +64,12 @@ class MainWindow(QMainWindow):
             timer.singleShot(10000, sys.exit)
             pass
 
+        except HoldModelError as e:
+            self.splashScreen.setError(str(e))
+            timer = QTimer()
+            timer.singleShot(10000, sys.exit)
+            pass
+
         except Error as e:
             self.splashScreen.setError(str(e))
             timer = QTimer()
@@ -75,6 +81,12 @@ class MainWindow(QMainWindow):
         currentClimber = self.lobbyScreen.getClimberName()
         self.lobbyScreen.setParent(None)
         self.setCentralWidget(self.holdFindingScreen)
+        self.holdFindingScreen.holdsFoundSignal.connect(self.goToClimbingScreen)
+
+    def goToClimbingScreen(self):
+        self.climbingScreen = ClimbingScreen(self)
+        self.holdFindingScreen.setParent(None)
+        self.setCentralWidget(self.climbingScreen)
 
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):

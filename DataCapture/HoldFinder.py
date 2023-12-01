@@ -17,14 +17,19 @@ class HoldFindingThread(QThread):
         print("Inference thread created.")
 
     def loadModel(self):
-        print('Loading model...', end='')
+        """
+        Loads the model from the model path.
+        """
         self.detectFn = tf.saved_model.load(self.modelPath)
-        print('Done!')
+        print('Model loaded!')
         self.modelLoaded.emit()
 
     def runInference(self, frame):
+        """
+        Runs inference on the given frame.
+        """
         if self.detectFn is not None:
-            print('Running inference... ', end='')
+            print('Running HoldFinder... ', end='')
             imageNp = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             inputTensor = tf.convert_to_tensor(imageNp)
             inputTensor = inputTensor[tf.newaxis, ...]
@@ -33,20 +38,28 @@ class HoldFindingThread(QThread):
             detections = {key: value[0, :numDetections].numpy() for key, value in detections.items()}
             detections['num_detections'] = numDetections
             detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
-            print('Done!')
+            print('HoldFinder done!')
             return detections
         else:
             print("Model not loaded yet. Please wait.")
             return None
 
     def loadImageIntoNumpyArray(self, path):
+        """
+        heper function to load an image into a numpy array 
+        """
         return np.array(Image.open(path))
 
     def run(self):
+        print('Loading model...', end='')
+
         self.loadModel()
 
 
 class MainWindow(QWidget):
+    """
+    Skeleton Mainwindow class to test the HoldFinder.
+    """
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -131,6 +144,13 @@ class MainWindow(QWidget):
 
 
 if __name__ == '__main__':
+    import sys
+    sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)\IGEN 430/ClimbingRocks')   
+
+    from error import HoldModelError
+
     app = QApplication([])
     mainWindow = MainWindow()
     app.exec_()
+else:
+    from error import HoldModelError
