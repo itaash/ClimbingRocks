@@ -30,6 +30,12 @@ class HoldFindingScreen(QWidget):
         # Set the main layout for the HoldFindingScreen
         # self.setLayout(self.stackedLayout)
 
+        # Add the logo to the top left corner
+        self.logoLabel = QLabel(self)
+        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(180, Qt.SmoothTransformation))
+        self.logoLabel.setStyleSheet("background-color: transparent;")
+        self.logoLabel.setFixedSize(180, 180)
+        self.logoLabel.move(20, 20)
         
         # clear area image
         self.clearAreaLabel = QLabel(self)
@@ -101,7 +107,7 @@ class HoldFindingScreen(QWidget):
         else:
             self.liveFeed.setPixmap(self.framePixmapWithHolds)
             self.clearAreaLabel.hide()
-            QTimer.singleShot(3000, self.holdsFoundSignal.emit)
+            # self.holdsFoundSignal.emit
 
         if self.parent.holdFindingModelLoaded:
             self.statusLabel.setFixedSize((self.parent.width()*2)//5, self.parent.height()//8)
@@ -192,6 +198,7 @@ class HoldFindingScreen(QWidget):
         if self.detections is not None:
             self.holdsFound = True
             # self.saveDetections(frame)
+            QTimer.singleShot(3000, self.holdsFoundSignal.emit)
     
     """
     def saveDetections(self, frame, maxHolds = 20, threshold = 0.3):

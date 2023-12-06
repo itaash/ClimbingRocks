@@ -8,8 +8,10 @@ from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QImage
 from UI.SplashScreen import SplashScreen
 from UI.LobbyScreen import LobbyScreen
 from UI.HoldFindingScreen import HoldFindingScreen
+from UI.ClimbingScreen import ClimbingScreen
 from DataCapture.CameraSender import CameraSender
 from DataCapture.HoldFinder import HoldFindingThread
+from DataCapture.PoseEstimator import PoseEstimatorThread
 from error import *
 
 class MainWindow(QMainWindow):
@@ -26,16 +28,17 @@ class MainWindow(QMainWindow):
         self.firstFrameReceived = False
         self.cameraConnected = False
         self.holdFindingModelLoaded = False
+        self.poseEstimatorModelLoaded = False
 
         try:    
 
             # Load fonts
             if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
-                raise FontError("Could not load font")
+                raise FontError("Could not load font: DMSans")
             else:
                 self.setFont(QFont("DM Sans"))
             if (QFontDatabase.addApplicationFont("UI/UIAssets/Bungee.ttf") == -1):
-                raise FontError("Could not load font")
+                raise FontError("Could not load font: Bungee")
             self.splashScreen.setProgress(10)
 
             # Create camera sender thread
@@ -50,6 +53,7 @@ class MainWindow(QMainWindow):
             self.holdFindingThread.modelLoaded.connect(self.onHoldFindingModelLoaded)
             self.splashScreen.setProgress(30)
             self.holdFindingThread.start()
+
 
 
         except CameraNotFoundError as e:
@@ -85,12 +89,21 @@ class MainWindow(QMainWindow):
 
     def goToClimbingScreen(self):
         self.climbingScreen = ClimbingScreen(self)
+        self.holdFindingScreen.cameraSender.frameSignal.disconnect(self.holdFindingScreen.updateLiveFeed)
         self.holdFindingScreen.setParent(None)
         self.setCentralWidget(self.climbingScreen)
+        self.climbingScreen.cameraSender.frameSignal.connect(self.climbingScreen.onFrameSignal)
 
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
         self.holdFindingModelLoaded = True
+        self.poseEstimator = PoseEstimatorThread(self)
+        self.poseEstimator.modelLoaded.connect(self.onPoseEstimatorLoaded)
+        self.poseEstimator.start()
+
+    @pyqtSlot()
+    def onPoseEstimatorLoaded(self):
+        self.poseEstimatorModelLoaded = True
 
 
     @pyqtSlot()
@@ -115,6 +128,9 @@ class MainWindow(QMainWindow):
                 self.setCentralWidget(self.lobbyScreen)
         pass
         
+    def onHoldsFound(self):
+        self.goToClimbingScreen()
+        pass
 
 
 

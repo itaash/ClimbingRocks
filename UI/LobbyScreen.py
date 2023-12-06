@@ -167,6 +167,13 @@ class LobbyScreen(QWidget):
         vLayout.addSpacing(30)
         vLayout.addLayout(hLayout)
 
+        # add logo to the center top of the inputLayout
+        # logoLabel = QLabel(self)
+        # logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(180, Qt.SmoothTransformation))
+        # logoLabel.setStyleSheet("background-color: transparent;")
+        # logoLabel.setFixedSize(180, 180)
+        # logoLabel.move(inputLayout.geometry().center().x(), 20)
+
 
         # Set the main layout for the LobbyScreen
         self.setLayout(vLayout)
