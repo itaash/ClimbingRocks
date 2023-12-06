@@ -9,6 +9,7 @@ from UI.SplashScreen import SplashScreen
 from UI.LobbyScreen import LobbyScreen
 from UI.HoldFindingScreen import HoldFindingScreen
 from DataCapture.CameraSender import CameraSender
+from DataCapture.HoldFinder import HoldFindingThread
 from error import *
 
 class MainWindow(QMainWindow):
@@ -24,22 +25,32 @@ class MainWindow(QMainWindow):
         # flags
         self.firstFrameReceived = False
         self.cameraConnected = False
+        self.holdFindingModelLoaded = False
 
         try:    
 
-            # Load font
+            # Load fonts
             if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
                 raise FontError("Could not load font")
             else:
                 self.setFont(QFont("DM Sans"))
-            self.splashScreen.setProgress(30)
+            if (QFontDatabase.addApplicationFont("UI/UIAssets/Bungee.ttf") == -1):
+                raise FontError("Could not load font")
+            self.splashScreen.setProgress(10)
 
             # Create camera sender thread
             self.cameraSender = CameraSender(self)
             self.cameraSender.frameSignal.connect(self.updateFrame)
             self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
-            self.splashScreen.setProgress(40)
+            self.splashScreen.setProgress(20)
             self.cameraSender.start()
+
+            # Create hold finding thread
+            self.holdFindingThread = HoldFindingThread(self)
+            self.holdFindingThread.modelLoaded.connect(self.onHoldFindingModelLoaded)
+            self.splashScreen.setProgress(30)
+            self.holdFindingThread.start()
+
 
         except CameraNotFoundError as e:
             self.splashScreen.setError(str(e))
@@ -48,6 +59,12 @@ class MainWindow(QMainWindow):
             pass
 
         except FontError as e:
+            self.splashScreen.setError(str(e))
+            timer = QTimer()
+            timer.singleShot(10000, sys.exit)
+            pass
+
+        except HoldModelError as e:
             self.splashScreen.setError(str(e))
             timer = QTimer()
             timer.singleShot(10000, sys.exit)
@@ -64,6 +81,16 @@ class MainWindow(QMainWindow):
         currentClimber = self.lobbyScreen.getClimberName()
         self.lobbyScreen.setParent(None)
         self.setCentralWidget(self.holdFindingScreen)
+        self.holdFindingScreen.holdsFoundSignal.connect(self.goToClimbingScreen)
+
+    def goToClimbingScreen(self):
+        self.climbingScreen = ClimbingScreen(self)
+        self.holdFindingScreen.setParent(None)
+        self.setCentralWidget(self.climbingScreen)
+
+    @pyqtSlot()
+    def onHoldFindingModelLoaded(self):
+        self.holdFindingModelLoaded = True
 
 
     @pyqtSlot()
