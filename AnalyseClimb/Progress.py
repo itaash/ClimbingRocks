@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import time
 
 
-dataset = pd.read_csv('output.csv', delimiter = ',')
+#holds_reached, total_holds, holds_coordinates, starting holds and ending holds to incorporate
 
 # Preprocess data, forward fill
 def preprocess_data(df):
@@ -12,7 +11,7 @@ def preprocess_data(df):
     return df
 
 def calculate_distance(x1, y1, x2, y2):
-    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    return np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 # Check if both wrists are close enough to the designated hold
 def check_wrist_on_hold(row, start_hold_x, start_hold_y, end_hold_x, end_hold_y, threshold):
