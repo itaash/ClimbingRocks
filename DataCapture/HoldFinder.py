@@ -21,7 +21,7 @@ class HoldFindingThread(QThread):
         Loads the model from the model path.
         """
         self.detectFn = tf.saved_model.load(self.modelPath)
-        print('Model loaded!')
+        print('Hold finding model loaded')
         self.modelLoaded.emit()
 
     def runInference(self, frame):
@@ -51,7 +51,7 @@ class HoldFindingThread(QThread):
         return np.array(Image.open(path))
 
     def run(self):
-        print('Loading model...', end='')
+        print('Loading hold finding model...', end='')
 
         self.loadModel()
 

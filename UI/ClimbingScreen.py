@@ -29,10 +29,10 @@ class ClimbingScreen(QWidget):
 
         # Add the logo to the top left corner
         self.logoLabel = QLabel(self)
-        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(180, Qt.SmoothTransformation))
+        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(160, Qt.SmoothTransformation))
         self.logoLabel.setStyleSheet("background-color: transparent;")
-        self.logoLabel.setFixedSize(180, 180)
-        self.logoLabel.move(20, 20)
+        self.logoLabel.setFixedSize(160, 160)
+        self.logoLabel.move(35, 14)
 
         # Connect signals
         self.cameraSender = parent.cameraSender
@@ -79,7 +79,7 @@ class ClimbingScreen(QWidget):
 
     @pyqtSlot(np.ndarray, tuple, tuple)
     def onInferenceSignal(self, keypoints, centerOfGravity, armAngles):
-        print("Inference signal received in ClimbingScreen")
+        # print("Inference signal received in ClimbingScreen")
         self.keypoints = keypoints
         self.centerOfGravity = centerOfGravity
         self.armAngles = armAngles        
@@ -134,6 +134,13 @@ class ClimbingScreen(QWidget):
         
         return frame
 
+
+
+@pyqtSlot()
+def onPoseEstimatorModelLoaded():
+    window.poseEstimatorModelLoaded = True
+    print("Model loaded from Main Window")
+
 if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -165,11 +172,6 @@ if __name__ == '__main__':
     window.poseEstimator = PoseEstimatorThread(window)
     window.poseEstimator.modelLoaded.connect(onPoseEstimatorModelLoaded)
 
-    @pyqtSlot()
-    def onPoseEstimatorModelLoaded():
-        window.poseEstimatorModelLoaded = True
-        print("Model loaded from Main Window")
-
     window.poseEstimator.start()
 
     window.climbingScreen = ClimbingScreen(window)
@@ -180,5 +182,6 @@ if __name__ == '__main__':
 else:
     from DataCapture.CameraSender import CameraSender
     from DataCapture.PoseEstimator import PoseEstimatorThread
+
 
 

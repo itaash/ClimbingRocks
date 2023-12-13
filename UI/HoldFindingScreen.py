@@ -32,10 +32,10 @@ class HoldFindingScreen(QWidget):
 
         # Add the logo to the top left corner
         self.logoLabel = QLabel(self)
-        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(180, Qt.SmoothTransformation))
+        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(160, Qt.SmoothTransformation))
         self.logoLabel.setStyleSheet("background-color: transparent;")
-        self.logoLabel.setFixedSize(180, 180)
-        self.logoLabel.move(20, 20)
+        self.logoLabel.setFixedSize(160, 160)
+        self.logoLabel.move(35, 14)
         
         # clear area image
         self.clearAreaLabel = QLabel(self)
@@ -110,7 +110,7 @@ class HoldFindingScreen(QWidget):
             # self.holdsFoundSignal.emit
 
         if self.parent.holdFindingModelLoaded:
-            self.statusLabel.setFixedSize((self.parent.width()*2)//5, self.parent.height()//8)
+            self.statusLabel.setFixedSize((self.parent.width()*1)//2, self.parent.height()//8)
             self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
                                     self.parent.height() - self.statusLabel.height() - 40)
             if not self.holdsFound:
