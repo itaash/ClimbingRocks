@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStackedLayout
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect, QSize
-import cv2
+import cv2, numpy as np
 
 from object_detection.utils import label_map_util, visualization_utils as viz_utils
 from object_detection.utils import ops as utils_ops
@@ -197,10 +197,10 @@ class HoldFindingScreen(QWidget):
         self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections)
         if self.detections is not None:
             self.holdsFound = True
-            # self.saveDetections(frame)
+            self.saveDetections(frame)
             QTimer.singleShot(3000, self.holdsFoundSignal.emit)
     
-    """
+    
     def saveDetections(self, frame, maxHolds = 20, threshold = 0.3):
         """
         # Save the locations of the detected holds to a file
@@ -210,23 +210,22 @@ class HoldFindingScreen(QWidget):
         #     maxHolds: The maximum number of holds to save
         #     threshold: The minimum score threshold for a hold to be saved
 
-    """
+        """
         if self.detections is not None:
             # Drop detections of volumes (class 2)
 
             # investigate why this doesn't work
-            self.detections = self.detections[self.detections['detection_classes'] == 1]
-
-            # sort the detections in descending order of score or possibly distance from center of frame
-            self.detections.sort_values(by=['detection_scores'], ascending=False, inplace=True)
+            filteredDetectionswithHolds = self.filterResultsforHolds(self.detections)
+            filteredDetectionswithHoldsInCenterHalf = self.filterResultsforCenterHalf(filteredDetectionswithHolds)
+            sortedDetections = self.sortDetectionsbyScore(filteredDetectionswithHoldsInCenterHalf)
 
 
             # Get the coordinates of the detected holds(class 1), not volumes (class 2)
-            boxes = self.detections['detection_boxes']
+            boxes = sortedDetections['detection_boxes']
             # Get the scores of the detected holds
-            scores = self.detections['detection_scores']
+            scores = sortedDetections['detection_scores']
             # Get the classes of the detected holds
-            classes = self.detections['detection_classes']
+            classes = sortedDetections['detection_classes']
 
             # Get the width and height of the frame
             height, width, channel = frame.shape
@@ -254,13 +253,54 @@ class HoldFindingScreen(QWidget):
             holdCoordinates.sort(key=lambda x: x[2])
             
             # Save the coordinates of the detected holds to a file
-            with open('data/hold_coordinates.csv', 'w') as f:
+            with open('data/holdCoordinates.csv', 'w') as f:
                 # Iterate through the coordinates of the detected holds
+                print("Savnig coordinates of ", len(holdCoordinates), " holds")
+                print(holdCoordinates)
                 for i, (left, right, top, bottom) in enumerate(holdCoordinates):
                     # Write the coordinates to the file
                     f.write(f'{i},{left},{right},{top},{bottom}\n')
-    """
-            
+    
+    def filterResultsforHolds(self, output, confidence_threshold=0.3):
+        scores = np.array(output['detection_scores'])
+        classes = np.array(output['detection_classes'])
+        mask = (scores >= confidence_threshold) & (classes == 1)
+
+        filteredResults = {
+            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[mask],
+            'detection_boxes': np.array(output['detection_boxes'])[mask],
+            'detection_classes': classes[mask],
+            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[mask],
+            'detection_scores': scores[mask]
+        }
+
+        return filteredResults
+        
+    def filterResultsforCenterHalf(self, output):
+        mask = (np.array(output['detection_boxes'])[:, 0] >= 0.25) & (np.array(output['detection_boxes'])[:, 0] <= 0.75)
+
+        filteredResults = {
+            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[mask],
+            'detection_boxes': np.array(output['detection_boxes'])[mask],
+            'detection_classes': np.array(output['detection_classes'])[mask],
+            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[mask],
+            'detection_scores': np.array(output['detection_scores'])[mask]
+        }
+
+        return filteredResults
+        
+    def sortDetectionsbyScore(self, output):
+        sortedIndices = np.argsort(output['detection_scores'])[::-1]
+
+        sortedResults = {
+            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[sortedIndices],
+            'detection_boxes': np.array(output['detection_boxes'])[sortedIndices],
+            'detection_classes': np.array(output['detection_classes'])[sortedIndices],
+            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[sortedIndices],
+            'detection_scores': np.array(output['detection_scores'])[sortedIndices]
+        }
+
+        return sortedResults
 
         
     def getImageWithHoldsVolumes(self, frame, detections):

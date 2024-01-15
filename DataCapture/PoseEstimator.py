@@ -12,6 +12,8 @@ FRAME_SKIP = 4
 class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
     inferenceSignal = pyqtSignal(np.ndarray, tuple, tuple)
+    climbInProgressSignal = pyqtSignal(bool)
+    climbFinishedSignal = pyqtSignal()
     usefulKeypointDict = {
     'left_shoulder': 5,
     'right_shoulder': 6,
