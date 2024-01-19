@@ -1,5 +1,9 @@
 //BLE LED BLINK TEST
 //Purpose: Tests HC-05 by blinking on board LED when sending HC-05 a 1 or 0
+//Instructions: Follow wiring diagram here (https://howtomechatronics.com/tutorials/arduino/arduino-and-hc-05-bluetooth-module-tutorial/) NOTE 1K and 2k RESISTOR to make a voltage divider on the HC-05's RX pin (HC-05 is powered by 5V but is 3.3 V logic)
+//              Power on and pair HC-05 with PC -> this creates a COM port specific to the HC-05 (check device manager for which COM port # was created)
+//              *RX and TX pins must be disconected to upload the script
+//              Open HC-05's COM port in the serial monitor, baud = 9600, line ending = Both NL & CR. Send 0 or 1 to check connection with onboard LED blinking.
 
 const int LED = 13; //Onboard LED for Uno
 char switchstate;
