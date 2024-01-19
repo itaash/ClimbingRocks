@@ -4,7 +4,7 @@
 //TO DO: Add multiplexer use
 
 #include "HX711.h"
-#include <mcp23017.h>
+
 #include <EEPROM.h>
 
 #define MCP_ADDR (0)
