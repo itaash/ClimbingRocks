@@ -13,7 +13,8 @@
 
 //HOLD PARAMETERS
 #define CALWEIGHT 1000
-#define HOLDCOUNT 10
+//# of HOLDS! EDIT FOR TESTING FEWER HOLDS
+#define NUM_HOLDS 1
 //max value for maping hold reading, grams - edit as needed or receive from rPi
 #define MAXVAL 50000 
 
@@ -33,7 +34,7 @@ HX711 holds[10] = {hold0, hold1, hold2, hold3, hold4, hold5, hold6, hold7, hold8
 float holdvals[] = {0,0,0,0,0,0,0,0,0,0};
 
 //LED INDICES
-uint8_t ledIndices[HOLDCOUNT][LEDS_PER_INPUT] = {
+/*uint8_t ledIndices[NUM_HOLDS][LEDS_PER_INPUT] = {
   {0,1,2,3,4,5,6,7,8,9},
   {10,11,12,13,14,15,16,17,18,19},
   {20,21,22,23,24,25,26,27,28,29},
@@ -45,6 +46,11 @@ uint8_t ledIndices[HOLDCOUNT][LEDS_PER_INPUT] = {
   {80,81,82,83,84,85,86,87,88,89},
   {90,91,92,93,94,95,96,97,98,99}
 };
+*/
+
+//for testing a single hold only! COMMENT OUT OTHERWISE:
+uint8_t ledIndices[NUM_HOLDS][LEDS_PER_INPUT] = {
+  {0,1,2,3,4,5,6,7,8,9}};
 
 //IO PINS
 uint8_t buttonTare= 11; //manual Tare button
@@ -72,7 +78,7 @@ void setup()
   pinMode(buttonTare, INPUT_PULLUP);
 
   //OPTIONAL - Yellow LED lights signifying calibrating
-  for (int i=0;i++;i<HOLDCOUNT){
+  for (int i=0;i++;i<NUM_HOLDS){
     for (int led = 0; led< LEDS_PER_INPUT; led++){
         leds[ledIndices[i][led]]=CRGB(128,128,0); //set LEDs yellow
       }
@@ -86,7 +92,7 @@ void setup()
   FastLED.addLeds<WS2811, LEDPin,GRB>(leds,NUM_LEDS);
 
   //OPTIONAL - Green LED lights signifying ready
-  for (int i=0;i++;i<HOLDCOUNT) {
+  for (int i=0;i++;i<NUM_HOLDS) {
     for (int led = 0; led< LEDS_PER_INPUT; led++){
         leds[ledIndices[i][led]]=CRGB(0,128,0); //set LEDs green
       }
@@ -101,7 +107,7 @@ void setup()
 void loop()
 {
   //loop through reading all holds and updating LEDs
-  for (int i=0;i++;i<HOLDCOUNT){
+  for (int i=0;i++;i<NUM_HOLDS){
     //manual tare of all holds if button pressed
     if (digitalRead(buttonTare)==false){
         holds[i].tare();
@@ -121,7 +127,7 @@ void loop()
   //Update LEDs and send values to rPi
   FastLED.show();
   Serial.print("holdvals:");
-  for (int i=0;i++;i<HOLDCOUNT){
+  for (int i=0;i++;i<NUM_HOLDS){
   Serial.print(holdvals[i]);
   Serial.print(",");
   }
