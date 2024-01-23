@@ -17,6 +17,6 @@ class ModelError(Error):
     """Raised when a model file could not be opened"""
     pass
 
-class HoldModelError(Error):
+class HoldModelError(ModelError):
     """Raised when a hold model file could not be opened"""
     pass

@@ -1,11 +1,13 @@
-import cv2, sys, os, logging
+import cv2, sys, os, logging, ast, csv
 import numpy as np
 from tensorflow.lite.python import interpreter as interpreterWrapper
-from PyQt5.QtCore import QThread, pyqtSignal, Qt, pyqtSlot, QRect
+from PyQt5.QtCore import QThread, pyqtSignal, Qt, pyqtSlot, QRect, QTimer
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QStackedLayout
 import math
 import time
+
+from UI.ClimbingScreen import ClimbingScreen
 
 FRAME_SKIP = 4
 
@@ -13,7 +15,7 @@ class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
     inferenceSignal = pyqtSignal(np.ndarray, tuple, tuple)
     climbInProgressSignal = pyqtSignal(bool)
-    climbFinishedSignal = pyqtSignal()
+    climbFinishedSignal = pyqtSignal(bool)
     usefulKeypointDict = {
     'left_shoulder': 5,
     'right_shoulder': 6,
@@ -32,16 +34,26 @@ class PoseEstimatorThread(QThread):
     def __init__(self, parent):
         super(PoseEstimatorThread, self).__init__(parent)
         self.modelPath = "models/movenet_lightning_f16.tflite"
+        self.holdCoordinatePath = "data/holdCoordinates.csv"
         self.interpreter = None
         self.inputDetails = None
         self.outputDetails = None
-        self.keypoints = None
+        self.keypointsData = []
         self.parent = parent
+        self.climbInProgress = False # True if the climber has been in a valid position for at least 1 second
+        self.climbBegun = False #True if the climber is in a valid position, but has not been in a valid position for at least 1 second
+        self.climbSuccessful = False # True if both hands have been on or above the highest hold
+        self.holdCoordinates = []
+        self.holdCoordinatesLoaded = False
 
         # Instantiate CameraSender
         self.cameraSender = parent.cameraSender
         self.cameraSender.cameraConnectSignal.connect(self.oncameraConnectSignal)
         self.cameraSender.frameSignal.connect(self.onFrameSignal)
+        try:
+            self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
+        except:
+            pass
 
         self.poseEstimatorModelLoaded = False
 
@@ -63,16 +75,152 @@ class PoseEstimatorThread(QThread):
         """
         self.interpreter.set_tensor(int(self.inputDetails[0]['index']), frame)
         self.interpreter.invoke()
-        keypoints = self.interpreter.get_tensor(int(self.outputDetails[0]['index']))[0][0]
+        self.keypoints = self.interpreter.get_tensor(int(self.outputDetails[0]['index']))[0][0]
 
-        return keypoints
+        return
+    
+    @pyqtSlot()
+    def getHoldsCoordinates(self):
+        """
+        gets the coordinates of the holds from the csv file
+        """
+        with open(self.holdCoordinatePath, 'r') as f:
+            holdCoordinatesListOfStrings = f.read().splitlines()
+            self.holdCoordinates = [ast.literal_eval(item) for item in holdCoordinatesListOfStrings]
+            print("Hold coordinates from PoseEstimationThread: ", self.holdCoordinates)
+        self.holdCoordinatesLoaded = True
+        return
 
+    def recordClimb(self):
+        """
+        if all 4 limbs are above the lowest hold, the climber is in a valid position. Start recording the climb.
+        Start 1 second timer to check if the climber is still in a valid position. If not, the climb is not in progress,
+        and so it cannot be finished. If the climber is in a valid position after a second, the climb is in progress,
+        and now if the climber is not in a valid position, the climb is finished. The timer is reset, and the recorded climb is discarded.
+
+        We also check if both hands have been on or above the highest hold. If yes, the climbFinished signal is emitted, and the climb is no longer in progress.
+        """
+        # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
+        lowestHoldY = self.holdCoordinates[-1][4]
+        highestHoldY = self.holdCoordinates[0][4]
+
+        # Extract the relevant keypoints for both hands and feet
+        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
+        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
+        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']]
+        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']]
+
+        # Check if all limbs are above the lowest hold
+        if self.isClimberInValidPosition():            # Climber is in a valid position, start recording the climb
+            if not self.climbBegun and not self.climbInProgress: # Climber was not in a valid position before, and is not in a valid position now
+                # Start a timer to check if the climber is still in a valid position after 1 second
+                self.climbBegun = True
+                self.startTime = time.time() * 1000 # in milliseconds
+                timer = QTimer()
+                timer.singleShot(1000, self.validateClimb)
+
+            # Store keypoints and timestamp
+            centerOfGravity = self.calculateCenterOfGravity()
+            leftArmAngle, rightArmAngle = self.calculateArmAngles()
+
+            timestamp = int((time.time() * 1000) - self.startTime)
+
+            frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
+            for usefulKeypoint in PoseEstimatorThread.usefulKeypointDict.values():
+                frameRow.extend([round(self.keypoints[usefulKeypoint][0], 5), 
+                                 round(self.keypoints[usefulKeypoint][1], 5)])
+            self.keypointsData.append(frameRow)
+            # Check if both hands have been on or above the highest hold
+            if leftHand[0] < highestHoldY and rightHand[0] < highestHoldY:
+                self.climbSuccessful = True
+
+
+        elif self.climbInProgress: # Climber was in a valid position before, but is not in a valid position now. The climb is finished - successful or not.
+            self.climbInProgress = False
+            self.climbInProgressSignal.emit(False)
+            # save keypoints data to a csv file
+            self.saveKeypointsData()
+            if self.climbSuccessful:
+                self.climbFinishedSignal.emit(True)
+                print("Climb successful!")
+            else:
+                self.climbFinishedSignal.emit(False)
+                print("Climb completed, but not successful.")
+
+
+    def validateClimb(self):
+        """
+        Check if the climber is still in a valid position after 1 second.
+        If yes, the climb is in progress. If not, the climb is reset.
+        """
+        self.climbBegun = False
+        if self.isClimberInValidPosition():
+            self.climbInProgress = True
+            self.climbInProgressSignal.emit(True)
+            print("Climb in progress!")
+        else:
+            self.climbInProgress = False
+            self.climbInProgressSignal.emit(False)
+            self.keypointsData = []
+            print("Climb reset.")
+        
+    def isClimberInValidPosition(self):
+        """
+        Check if the climber is in a valid position.
+        Returns:
+        bool: True if the climber is in a valid position, False otherwise.
+        """
+        # Extract the relevant keypoints for both hands and feet
+        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
+        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
+        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']]
+        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']]
+
+        # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
+        lowestHoldY = self.holdCoordinates[-1][4]
+
+        print("leftHand: ", leftHand)
+        print("rightHand: ", rightHand)
+        print("leftFoot: ", leftFoot)
+        print("rightFoot: ", rightFoot)
+        print("lowestHoldY: ", lowestHoldY)
+
+        # Check if all limbs are above the lowest hold
+        return leftHand[0] < lowestHoldY and rightHand[0] < lowestHoldY and leftFoot[0] < lowestHoldY and rightFoot[0] < lowestHoldY
+
+    def completeClimbDueToTimeout(self):
+        """
+        Called when the climb has not been completed within the specified timeout.
+        Completes the climb as unsuccessful.
+        """
+        self.climbInProgress = False
+        self.climbInProgressSignal.emit(False)
+        # Save keypoints data to a CSV file
+        self.saveKeypointsData()
+        self.climbFinishedSignal.emit(False)  # Mark the climb as unsuccessful
+        print("Climb completed due to timeout, but not successful.")
+    
+    def saveKeypointsData(self):
+        """
+        Save keypoints data to a CSV file.
+        """
+        if self.keypointsData:
+            filename = f"keypoints_data_{time.strftime('%Y%m%d%H%M%S')}.csv"
+            with open(filename, 'w', newline='') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(['Timestamp', 'Keypoints'])
+                for timestamp, keypoints in self.keypointsData:
+                    csvwriter.writerow([timestamp, keypoints])
+            print(f"Keypoints data saved to {filename}")
+            self.keypointsData = []
+        
 
     def loadModel(self):
         self.interpreter = interpreterWrapper.Interpreter(model_path=self.modelPath)
         self.interpreter.allocate_tensors()
         self.inputDetails = self.interpreter.get_input_details()
         self.outputDetails = self.interpreter.get_output_details()
+
         self.modelLoaded.emit()
         self.poseEstimatorModelLoaded = True
 
@@ -93,38 +241,43 @@ class PoseEstimatorThread(QThread):
         # if isinstance(self.parent.centralWidget(), ClimbingScreen):
         #     print(self.parent.centralWidget())
         #     return
+        # if hold coordinates have not been loaded, do not record the climb
+        if not self.holdCoordinatesLoaded:
+            return
+        
         self.frameCounter += 1
         if self.frameCounter % FRAME_SKIP == 0:
-            frame = self.cameraSender.getFrame()
             self.frameCounter = 0
+            frame = self.cameraSender.getFrame()
             if (frame is not None) and self.poseEstimatorModelLoaded:
                 inputFrame = self.preprocessFrame(frame)
-                keypoints = self.runInference(inputFrame)
-                centerOfGravity = self.calculateCenterOfGravity(keypoints)
-                armAngles = self.calculateArmAngles(keypoints)
-                self.inferenceSignal.emit(keypoints, centerOfGravity, armAngles)
+                self.runInference(inputFrame)
+                centerOfGravity = self.calculateCenterOfGravity()
+                armAngles = self.calculateArmAngles()
+                self.inferenceSignal.emit(self.keypoints, centerOfGravity, armAngles)
+                self.recordClimb()
 
 
 
-    def calculateArmAngles(self, keypoints, threshold=0.3):
+    def calculateArmAngles(self, threshold=0.3):
         """
         Calculate the elbow angle of each arm. The angle is 0 when the hand is touching the shoulder from above.
 
         Args:
-        keypoints (list): List of keypoints (e.g., [[x, y, score], ...]), typically from the MoveNet model.
+        # keypoints (list): List of keypoints (e.g., [[x, y, score], ...]), typically from the MoveNet model.
         threshold (float): Minimum confidence score for a keypoint to be considered.
 
         Returns:
         tuple: The angle of each arm (e.g., (leftArmAngle, rightArmAngle)). If a keypoint is not visible, the angle is None.
         """
         
-        leftShoulder = keypoints[PoseEstimatorThread.usefulKeypointDict['left_shoulder']]
-        leftElbow = keypoints[PoseEstimatorThread.usefulKeypointDict['left_elbow']]
-        leftWrist = keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
+        leftShoulder = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_shoulder']]
+        leftElbow = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_elbow']]
+        leftWrist = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
 
-        rightShoulder = keypoints[PoseEstimatorThread.usefulKeypointDict['right_shoulder']]
-        rightElbow = keypoints[PoseEstimatorThread.usefulKeypointDict['right_elbow']]
-        rightWrist = keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
+        rightShoulder = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_shoulder']]
+        rightElbow = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_elbow']]
+        rightWrist = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
 
         # Calculate angles for both arms
         # leftArmAngle = math.degrees(math.atan2(leftWrist[1] - leftElbow[1], leftWrist[0] - leftElbow[0]) - math.atan2(leftShoulder[1] - leftElbow[1], leftShoulder[0] - leftElbow[0]))
@@ -147,7 +300,7 @@ class PoseEstimatorThread(QThread):
         return leftArmAngle, rightArmAngle
 
 
-    def calculateCenterOfGravity(self, keypoints, threshold=0.3):
+    def calculateCenterOfGravity(self, threshold=0.3):
         """
         Calculate the center of gravity of the body.
 
@@ -160,10 +313,10 @@ class PoseEstimatorThread(QThread):
         """
         totalX, totalY, points = 0, 0, 0
 
-        cgPoints = {"leftShoulder": keypoints[PoseEstimatorThread.usefulKeypointDict['left_shoulder']], 
-                    "rightShoulder": keypoints[PoseEstimatorThread.usefulKeypointDict['right_shoulder']], 
-                    "leftHip": keypoints[PoseEstimatorThread.usefulKeypointDict['left_hip']], 
-                    "rightHip": keypoints[PoseEstimatorThread.usefulKeypointDict['right_hip']]}  
+        cgPoints = {"leftShoulder": self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_shoulder']], 
+                    "rightShoulder": self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_shoulder']], 
+                    "leftHip": self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_hip']], 
+                    "rightHip": self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_hip']]}  
 
         for keypoint in cgPoints.values():
             x, y, score = keypoint[0], keypoint[1], keypoint[2]

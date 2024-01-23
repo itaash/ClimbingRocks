@@ -9,6 +9,7 @@ from UI.SplashScreen import SplashScreen
 from UI.LobbyScreen import LobbyScreen
 from UI.HoldFindingScreen import HoldFindingScreen
 from UI.ClimbingScreen import ClimbingScreen
+from UI.ResultsScreen import ResultsScreen
 from DataCapture.CameraSender import CameraSender
 from DataCapture.HoldFinder import HoldFindingThread
 from DataCapture.PoseEstimator import PoseEstimatorThread
@@ -29,6 +30,7 @@ class MainWindow(QMainWindow):
         self.cameraConnected = False
         self.holdFindingModelLoaded = False
         self.poseEstimatorModelLoaded = False
+        self.climbFinished = False
 
         try:    
 
@@ -93,6 +95,7 @@ class MainWindow(QMainWindow):
         self.holdFindingScreen.setParent(None)
         self.setCentralWidget(self.climbingScreen)
         self.climbingScreen.cameraSender.frameSignal.connect(self.climbingScreen.onFrameSignal)
+
 
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
