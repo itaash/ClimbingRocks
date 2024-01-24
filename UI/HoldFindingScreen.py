@@ -243,7 +243,7 @@ class HoldFindingScreen(QWidget):
                         # Get the coordinates of the hold
                         ymin, xmin, ymax, xmax = boxes[i]
                         # Convert the coordinates from normalized to pixel coordinates
-                        left, right, top, bottom = xmin * width, xmax * width, ymin * height, ymax * height
+                        left, right, top, bottom = round(xmin * width), round(xmax * width), round(ymin * height), round(ymax * height)
                         # Add the coordinates of the hold to the list
                         holdCoordinates.append((left, right, top, bottom))
                         i += 1
@@ -255,13 +255,23 @@ class HoldFindingScreen(QWidget):
             # Save the coordinates of the detected holds to a file
             with open('data/holdCoordinates.csv', 'w') as f:
                 # Iterate through the coordinates of the detected holds
-                print("Savnig coordinates of ", len(holdCoordinates), " holds")
-                print(holdCoordinates)
+                print("Saving coordinates of ", len(holdCoordinates), " holds")
+                # print(holdCoordinates) # for debugging
                 for i, (left, right, top, bottom) in enumerate(holdCoordinates):
                     # Write the coordinates to the file
                     f.write(f'{i},{left},{right},{top},{bottom}\n')
     
     def filterResultsforHolds(self, output, confidence_threshold=0.3):
+        """
+        Filter the results of the hold finding model to only include holds, not volumes
+
+        Args:
+            output: The output of the hold finding model
+            confidence_threshold: The minimum confidence threshold for a detection to be included. Default is 0.3
+
+        Returns:
+            filteredResults: The filtered results of the hold finding model that only include holds, not volumes
+        """
         scores = np.array(output['detection_scores'])
         classes = np.array(output['detection_classes'])
         mask = (scores >= confidence_threshold) & (classes == 1)
@@ -277,6 +287,16 @@ class HoldFindingScreen(QWidget):
         return filteredResults
         
     def filterResultsforCenterHalf(self, output):
+        """
+        Filter the results of the hold finding model to only include holds in the center half of the frame
+        
+        Args:
+            output: The output of the hold finding model
+
+        Returns:
+            filteredResults: The filtered results of the hold finding model that only include holds in the center half of the frame
+        """
+
         mask = (np.array(output['detection_boxes'])[:, 0] >= 0.25) & (np.array(output['detection_boxes'])[:, 0] <= 0.75)
 
         filteredResults = {
@@ -290,6 +310,16 @@ class HoldFindingScreen(QWidget):
         return filteredResults
         
     def sortDetectionsbyScore(self, output):
+        """
+        Sort the results of the hold finding model by their score in descending order. The highest scoring detection will be first in the list so that the highest scoring holds are saved based on the maxHolds parameter in saveDetections.
+
+        Args:
+            output: The output of the hold finding model
+
+        Returns:
+            sortedResults: The sorted results of the hold finding model
+        """
+
         sortedIndices = np.argsort(output['detection_scores'])[::-1]
 
         sortedResults = {
