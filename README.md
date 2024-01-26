@@ -3,12 +3,13 @@
 Welcome to the Climbing Rocks App! This application is designed for [provide a brief description of the app's purpose].
 
 ## Table of Contents
-- [Introduction](##introduction)
-- [Features](##features)
-- [Requirements](##requirements)
-- [Installation](##installation)
-- [Usage](##usage)
-- [License](##license)
+- [Introduction](#introduction)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
 
 ## Introduction
 
