@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sb
 
 
 # Preprocess data, forward fill
@@ -16,6 +17,7 @@ def measure_arm_angle(data):
     arm_angle_sum = 0
     num_samples = len(data)
     num_low_angles = 0
+    num_high_angles = 0
 
     for index, row in data.iterrows():
         left_arm_angle = row['Left Arm Angle']
@@ -29,6 +31,9 @@ def measure_arm_angle(data):
         if avg_arm_angle < low_angle_threshold:
             num_low_angles += 1
 
+        if avg_arm_angle > high_angle_threshold:
+            num_high_angles += 1
+
     # Calculate the average arm angle
     average_arm_angle = arm_angle_sum / num_samples if num_samples > 0 else 0
 
@@ -40,69 +45,158 @@ def measure_arm_angle(data):
     return max(0, round(score, 2))
 
 
-def measure_smoothness_on_holds(data):
-    hold_threshold = 10  # Set a threshold distance to determine if the hands are on holds
-    smoothness_scores = []
-
-    hold_x = data['Center of Gravity X']  # Assuming this column holds hold coordinates
-    hold_y = data['Center of Gravity Y']
-
-    hands_on_hold = False
-    hand_coordinates = []
-
-    for index, row in data.iterrows():
-        left_wrist_x = row['left_wrist_X']
-        left_wrist_y = row['left_wrist_Y']
-        right_wrist_x = row['right_wrist_X']
-        right_wrist_y = row['right_wrist_Y']
-
-        # Calculate distances between hands and holds
-        for i in range(len(hold_x)):
-            left_distance = math.sqrt((hold_x[i] - left_wrist_x) ** 2 + (hold_y[i] - left_wrist_y) ** 2)
-            right_distance = math.sqrt((hold_x[i] - right_wrist_x) ** 2 + (hold_y[i] - right_wrist_y) ** 2)
-
-            # Check if hands are on holds
-            if left_distance < hold_threshold and right_distance < hold_threshold:
-                hands_on_hold = True
-                hand_coordinates.append((left_wrist_x, left_wrist_y))
-                hand_coordinates.append((right_wrist_x, right_wrist_y))
-                break
-
-        # If hands are not on holds anymore, calculate standard deviation
-        if not hands_on_hold and hand_coordinates:
-            x_coords = [coord[0] for coord in hand_coordinates]
-            y_coords = [coord[1] for coord in hand_coordinates]
-            x_std_dev = pd.Series(x_coords).std()
-            y_std_dev = pd.Series(y_coords).std()
-
-            # Calculate combined standard deviation
-            combined_std_dev = (x_std_dev + y_std_dev) / 2
-            smoothness_scores.append(combined_std_dev)
-
-            # Reset hand coordinates list
-            hand_coordinates = []
-
-    if smoothness_scores:
-        average_std_dev = sum(smoothness_scores) / len(smoothness_scores)
-        return 100 - average_std_dev  # Return the inverse of the average as the score
-    else:
-        return 0  # If no data available, return 0 score
+# Function definition with separate results for right and left hands
+def calculate_time_on_holds(climb_data, holds_data, threshold_distance=2):
+    result_df_left = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Left(ms)', 'Start_Timestamp_Left(ms)', 'End_Timestamp_Left(ms)'])
+    result_df_right = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Right(ms)', 'Start_Timestamp_Right(ms)', 'End_Timestamp_Right(ms)'])
     
+    for hold_index, hold_row in holds_data.iterrows():
+        hold_id, hold_x, hold_y = hold_row
+
+        # Filter the climb_data based on the hold coordinates and threshold for left hand
+        left_wrist_hold = climb_data[
+            ((climb_data['left_wrist_X'] - hold_x)**2 + (climb_data['left_wrist_Y'] - hold_y)**2) <= threshold_distance**2
+        ]
+
+        if not left_wrist_hold.empty:
+            # Calculate the total time spent on the hold by the left hand
+            total_time_on_hold_left = left_wrist_hold['Timestamp(ms)'].sum()
+
+            # Determine the start and end timestamps for the left hand
+            start_timestamp_left = left_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_left = left_wrist_hold['Timestamp(ms)'].max()
+
+            # Append the result to the left hand DataFrame
+            result_df_left = result_df_left.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Left(ms)': total_time_on_hold_left,
+                'Start_Timestamp_Left(ms)': start_timestamp_left,
+                'End_Timestamp_Left(ms)': end_timestamp_left
+            }, ignore_index=True)
+        else:
+            # If hold was not held at all by the left hand, set values to 0
+            result_df_left = result_df_left.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Left(ms)': 0,
+                'Start_Timestamp_Left(ms)': 0,
+                'End_Timestamp_Left(ms)': 0
+            }, ignore_index=True)
+
+        # Filter the climb_data based on the hold coordinates and threshold for right hand
+        right_wrist_hold = climb_data[
+            ((climb_data['right_wrist_X'] - hold_x)**2 + (climb_data['right_wrist_Y'] - hold_y)**2) <= threshold_distance**2
+        ]
+
+        if not right_wrist_hold.empty:
+            # Calculate the total time spent on the hold by the right hand
+            total_time_on_hold_right = right_wrist_hold['Timestamp(ms)'].sum()
+
+            # Determine the start and end timestamps for the right hand
+            start_timestamp_right = right_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_right = right_wrist_hold['Timestamp(ms)'].max()
+
+            # Append the result to the right hand DataFrame
+            result_df_right = result_df_right.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Right(ms)': total_time_on_hold_right,
+                'Start_Timestamp_Right(ms)': start_timestamp_right,
+                'End_Timestamp_Right(ms)': end_timestamp_right
+            }, ignore_index=True)
+        else:
+            # If hold was not held at all by the right hand, set values to 0
+            result_df_right = result_df_right.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Right(ms)': 0,
+                'Start_Timestamp_Right(ms)': 0,
+                'End_Timestamp_Right(ms)': 0
+            }, ignore_index=True)
+
+    return result_df_left, result_df_right
+
+def calculate_smoothness(climb_data, left_hand_df, right_hand_df):
+    # Merge the two DataFrames on 'Hold_Id'
+    merged_df = pd.merge(left_hand_df, right_hand_df, on='Hold_Id', how='inner', suffixes=('_left', '_right'))
+
+    # Identify rows where there is an overlap in the time interval
+    overlap_df = merged_df[
+        (merged_df['Start_Timestamp_Left(ms)'] <= merged_df['End_Timestamp_Right(ms)']) &
+        (merged_df['End_Timestamp_Left(ms)'] >= merged_df['Start_Timestamp_Right(ms)'])
+    ]
+
+    # Create a new DataFrame with common timestamps and standard deviations
+    common_timestamps_df = pd.DataFrame(columns=['Start_Time_Common(ms)', 'End_Time_Common(ms)', 'COG_X_Std', 'COG_Y_Std'])
+
+    # Iterate through overlapping rows
+    for index, row in overlap_df.iterrows():
+        # Determine the common start and end times
+        start_time_common = max(row['Start_Timestamp_Left(ms)'], row['Start_Timestamp_Right(ms)'])
+        end_time_common = min(row['End_Timestamp_Left(ms)'], row['End_Timestamp_Right(ms)'])
+
+        # Filter climb data for the common timestamp period
+        common_data = climb_data[
+            (climb_data['Timestamp(ms)'] >= start_time_common) &
+            (climb_data['Timestamp(ms)'] <= end_time_common)
+        ]
+
+        # Calculate the standard deviation of 'Center of Gravity X' and 'Center of Gravity Y'
+        cog_x_std = common_data['Center of Gravity X'].std()
+        cog_y_std = common_data['Center of Gravity Y'].std()
+
+        # Append to the result DataFrame
+        common_timestamps_df = common_timestamps_df.append({
+            'Start_Time_Common(ms)': start_time_common,
+            'End_Time_Common(ms)': end_time_common,
+            'COG_X_Std': cog_x_std,
+            'COG_Y_Std': cog_y_std
+        }, ignore_index=True)
+    
+    scaler = 2 #THIS VALUE TO CHANGE WHEN WE START TESTING
+    avg_cog_x_std = common_timestamps_df['COG_X_Std'].mean()
+    avg_cog_y_std = common_timestamps_df['COG_Y_Std'].mean()
+    avg_cog = (avg_cog_y_std + avg_cog_x_std)/2
+    cog_score = 100 - avg_cog*scaler
+    return cog_score
+
 
     # Sample usage of the functions
-def main():
-    climbing_data = pd.read_csv('your_data.csv')  # Replace 'your_data.csv' with your file name
-    
-    climbing_data = preprocess_data(climbing_data)  # Preprocess NaN values in the DataFrame
-
-
-    smoothness_score = measure_smoothness_on_holds(climbing_data)
+def calculatePosition(climbData, holdsCoordinates):
+    climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
+    threshold_distance = 10 #THIS VALUE TO CHANGE WHEN WE START TESTING
+    result_dataframe_left, result_dataframe_right = calculate_time_on_holds(climbData, holdsCoordinates, threshold_distance)
+    smoothness_score = calculate_smoothness(climbing_data, result_dataframe_left, result_dataframe_right)
     arm_angle_score = measure_arm_angle(climbing_data)
 
     combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
-    print(f"The climber's combined score is {combined_score}.")
+    return round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)
 
-if __name__ == "__main__":
-    main()
 
+def visualisePosition(climbData, holdsCoordinates):
+    # Create a DataFrame
+    threshold = 5 #VALUE TO BE CHANGED WHEN TESTING
+    data = {'Time': climbData['Timestamp(ms)'], 'Values': climbData['Center of Gravity X']}
+    df = pd.DataFrame(data)
+
+    # Set up the seaborn style
+    sb.set(style="whitegrid")
+
+    # Plot the lineplot
+    ax = sb.lineplot(x='Time', y='Values', data=df)
+
+    # Add a horizontal line for the threshold
+    ax.axhline(y=threshold, color='green', linestyle='--', label='Threshold', alpha=0.7)
+
+    # Fill the area below the threshold with green color
+    ax.fill_between(df['Time'], 0, threshold, color='green', alpha=0.1)
+
+    # Remove grid lines
+    ax.grid(False)
+
+    # Set labels and title
+    plt.xlabel('Time')
+    plt.ylabel('Values')
+    plt.title('Values vs Time with Threshold')
+
+    # Return the plot
+    return plt
+    #graph 2 on top of each other, green zone is good, when you had good control the line is in the green and bad the line is in the clear
 
