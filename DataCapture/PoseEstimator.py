@@ -91,7 +91,7 @@ class PoseEstimatorThread(QThread):
         self.holdCoordinatesLoaded = True
         return
 
-    def recordClimb(self):
+    def recordClimb(self, frame):
         """
         if all 4 limbs are above the lowest hold, the climber is in a valid position. Start recording the climb.
         Start 1 second timer to check if the climber is still in a valid position. If not, the climb is not in progress,
@@ -99,13 +99,16 @@ class PoseEstimatorThread(QThread):
         and now if the climber is not in a valid position, the climb is finished. The timer is reset, and the recorded climb is discarded.
 
         We also check if both hands have been on or above the highest hold. If yes, the climbFinished signal is emitted, and the climb is no longer in progress.
+
+        Args:
+        frame (numpy.ndarray): The frame to run inference on.
         """
         # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
         lowestHoldY = self.holdCoordinates[-1][4]
         highestHoldY = self.holdCoordinates[0][4]
 
         # Extract the relevant keypoints for both hands and feet
-        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
+        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:1] * frame.shape[0]
         rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
         leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']]
         rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']]
@@ -135,7 +138,7 @@ class PoseEstimatorThread(QThread):
                 self.climbSuccessful = True
 
 
-        elif self.climbInProgress: # Climber was in a valid position before, but is not in a valid position now. The climb is finished - successful or not.
+        elif not self.climbInProgress: # Climber was in a valid position before, but is not in a valid position now. The climb is finished - successful or not.
             self.climbInProgress = False
             self.climbInProgressSignal.emit(False)
             # save keypoints data to a csv file
@@ -171,10 +174,16 @@ class PoseEstimatorThread(QThread):
         bool: True if the climber is in a valid position, False otherwise.
         """
         # Extract the relevant keypoints for both hands and feet
-        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']]
-        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
-        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']]
-        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']]
+        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:2]
+        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][0:2]
+        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][0:2]
+        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][0:2]
+
+        # get shape of frame to convert from normalized coordinates to pixel coordinates
+        frameShape = self.inputDetails[0]['shape'][1:3]
+        print("frameShape: ", frameShape)
+
+        # change from normalized coordinates to pixel coordinates
 
         # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
         lowestHoldY = self.holdCoordinates[-1][4]
@@ -255,7 +264,7 @@ class PoseEstimatorThread(QThread):
                 centerOfGravity = self.calculateCenterOfGravity()
                 armAngles = self.calculateArmAngles()
                 self.inferenceSignal.emit(self.keypoints, centerOfGravity, armAngles)
-                self.recordClimb()
+                self.recordClimb(frame)
 
 
 

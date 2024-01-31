@@ -7,6 +7,15 @@ from AnalyseClimb import Pressure, Positioning, Progress
 class ClimbAnalyserThread(QThread):
     ClimbAnalysisComplete = pyqtSignal()  # Signal to indicate that analysis is complete
 
+    climbingTipsDict = { "arm-bend": "Try to keep your arms straighter",
+                         "hip-distance": "Try to keep your hips closer to the wall",
+                         "speed": "Try to climb faster"
+    }
+
+    metricsWeights = {"pressure": 0.5, "positioning": 0.3, "progress": 0.2}
+
+    submetricsWeights = {""}
+
     def __init__(self, climberName, parent):
         super().__init__(parent)
         self.climberName = climberName
@@ -70,3 +79,11 @@ class ClimbAnalyserThread(QThread):
     
     def getProgressVisualisation(self):
         return self.progressVisualisation
+    
+    def getClimbingTip(self):
+        """
+        finds the weakest submetric and returns a tip to improve it
+        weakes submetric is the one with the lowest weighted score
+        """
+        # TODO: implement this
+        pass

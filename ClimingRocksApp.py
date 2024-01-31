@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
 
     def goToHoldFindingScreen(self):
         self.holdFindingScreen = HoldFindingScreen(self)
-        currentClimber = self.lobbyScreen.getClimberName()
+        self.currentClimber = self.lobbyScreen.getClimberName()
         self.lobbyScreen.setParent(None)
         self.setCentralWidget(self.holdFindingScreen)
         self.holdFindingScreen.holdsFoundSignal.connect(self.goToClimbingScreen)
