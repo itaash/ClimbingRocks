@@ -6,8 +6,6 @@ from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButt
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 
-from AnalyseClimb.ClimbAnalyser import ClimbAnalyserThread
-
 class ResultsScreen(QWidget):
     def __init__(self, climberName, climbSuccessful, parent=None):
         super(ResultsScreen, self).__init__(parent)
@@ -19,9 +17,12 @@ class ResultsScreen(QWidget):
         self.mainLayout.addSpacing(20)
 
         #intro text
-        climbFinishedLabel = QLabel()
-        climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans';")
-        climbFinishedLabel.setText(f"Climb finished, {climberName}, we're analysing your climb")
+        self.climbFinishedLabel = QLabel()
+        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans';")
+        self.climbFinishedLabel.setText(f"Climb finished, {climberName}, we're analysing your climb")
+
+        self.climbSuccessful = climbSuccessful
+        self.climberName = climberName
 
         # Create the central hbox layout with three widgets
         hboxLayout = QHBoxLayout()
@@ -61,6 +62,12 @@ class ResultsScreen(QWidget):
 
     @pyqtSlot()
     def updateMetrics(self):
+
+        if self.climbSuccessful:
+            self.climbFinishedLabel.setText(f"Congratulations, {self.climberName}, here's how you did")
+        else:
+            self.climbFinishedLabel.setText(f"Skill issue, {self.climberName}, here's an analysis of your lame attempt")
+
         pressureSubmetrics = self.climbAnalyser.getPressureSubmetrics()
         pressureVisualisation = self.climbAnalyser.getPressureVisualisation()
 
@@ -118,4 +125,38 @@ class MetricWidget(QWidget):
         def updateScore(self, score):
             self.labelScore.setText(str(score))
             self.labelScore.update()
+
+
+if __name__ == "__main__":
+    import sys, os
+    from PyQt5.QtWidgets import QApplication, QMainWindow
+    from PyQt5.QtGui import QFontDatabase
+    
+    sys.path.append(os. getcwd())
+    
+    from error import FontError
+
+
+    if (QFontDatabase.addApplicationFont("UI/UIAssets/DMSans.ttf") == -1):
+        raise FontError("Could not load font")
+
+    if (QFontDatabase.addApplicationFont("UI/UIAssets/Bungee.ttf") == -1):
+        raise FontError("Could not load font")
+
+
+
+    app = QApplication(sys.argv)
+    window = QMainWindow()
+    window.setFixedSize(1280, 800)
+    window.setFont(QFont("DM Sans"))
+    window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
+    
+    window.resultsScreen = ResultsScreen("John Doe", False, window)
+    window.setCentralWidget(window.resultsScreen)
+    
+    
+    window.show()
+    sys.exit(app.exec_())
+else:
+    from AnalyseClimb.ClimbAnalyser import ClimbAnalyserThread
     
