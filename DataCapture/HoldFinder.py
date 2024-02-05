@@ -101,7 +101,7 @@ class MainWindow(QWidget):
         else:
             print("Model not loaded yet. Please wait.")
 
-    def showImage(self, imagePath, detections):
+    def showImage(self, imagePath, detections, threshold=0.3):
         imageNpWithDetections = cv2.imread(imagePath)
         viz_utils.visualizeBoxesAndLabelsOnImageArray(
             imageNpWithDetections,
@@ -112,7 +112,7 @@ class MainWindow(QWidget):
                 'models/HoldModel/hold-detection_label_map.pbtxt', useDisplayName=True),
             useNormalizedCoordinates=True,
             maxBoxesToDraw=200,
-            minScoreThresh=.30,
+            minScoreThresh=threshold,
             agnosticMode=False)
 
         # Convert image to QImage

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStackedLayout
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, pyqtSlot, QRect, QSize
-import cv2, numpy as np
+import cv2, numpy as np, csv
 
 from object_detection.utils import label_map_util, visualization_utils as viz_utils
 from object_detection.utils import ops as utils_ops
@@ -134,7 +134,6 @@ class HoldFindingScreen(QWidget):
                     "font-size: 40px;"
                     "font-family: 'Bungee';"
                     "font-weight: bold;"
-                    "opacity: 0.4"
                 )
         else:
             self.statusLabel.setFixedSize((self.parent.width()*2)//4, self.parent.height()//8)
@@ -148,7 +147,7 @@ class HoldFindingScreen(QWidget):
                 "border: 10px solid #3BC7E3;" # darker blue border
                 "font-size: 30px;"
                 "line-height: 0.5;"
-                "font-family: 'Bungee';"
+                "font-family: 'DMSans';"
                 "font-weight: bold;"
             )
 
@@ -193,12 +192,15 @@ class HoldFindingScreen(QWidget):
     def findHoldsFunction(self, frame):
         # Placeholder for the FindHolds function
         # Implement your logic to find holds in the frame
+        # modify minScore and numHolds to change the number of holds detected
         print("Finding Holds...")
         self.detections = self.holdFindingThread.runInference(frame)
-        self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections)
+        minScore = 0.1
+        numHolds = 10
+        self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections, minScore)
         if self.detections is not None:
             self.holdsFound = True
-            self.saveDetections(frame)
+            self.saveDetections(frame, maxHolds=numHolds, threshold=minScore)
             QTimer.singleShot(3000, self.holdsFoundSignal.emit)
     
     
@@ -216,7 +218,7 @@ class HoldFindingScreen(QWidget):
             # Drop detections of volumes (class 2)
 
             # investigate why this doesn't work
-            filteredDetectionswithHolds = self.filterResultsforHolds(self.detections)
+            filteredDetectionswithHolds = self.filterResultsforHolds(self.detections, threshold)
             filteredDetectionswithHoldsInCenterHalf = self.filterResultsforCenterHalf(filteredDetectionswithHolds)
             sortedDetections = self.sortDetectionsbyScore(filteredDetectionswithHoldsInCenterHalf)
 
@@ -255,15 +257,16 @@ class HoldFindingScreen(QWidget):
 
             print(holdCoordinates) # for debugging
 
-
             # Save the coordinates of the detected holds to a file
-            with open('data/holdCoordinates.csv', 'w') as f:
+            with open('data/holdCoordinates.csv', 'w', newline='') as f:
+                writer = csv.writer(f)
                 # Iterate through the coordinates of the detected holds
-                print("Saving coordinates of ", len(holdCoordinates), " holds")
-                # print(holdCoordinates) # for debugging
+                print("Saving coordinates of", len(holdCoordinates), "holds")
+                header = ["holdNumber", "left", "right", "top", "bottom"]
+                writer.writerow(header)
                 for i, (left, right, top, bottom) in enumerate(holdCoordinates):
                     # Write the coordinates to the file
-                    f.write(f'{i},{round(left, 5)},{round(right, 5)},{round(top, 5)},{round(bottom, 5)}\n')
+                    writer.writerow([i, left, right, top, bottom])
     
     def filterResultsforHolds(self, output, threshold=0.3):
         """
@@ -339,7 +342,7 @@ class HoldFindingScreen(QWidget):
         return sortedResults
 
         
-    def getImageWithHoldsVolumes(self, frame, detections):
+    def getImageWithHoldsVolumes(self, frame, detections, threshold=0.3):
         viz_utils.visualize_boxes_and_labels_on_image_array(
             frame,
             detections['detection_boxes'],
@@ -348,9 +351,10 @@ class HoldFindingScreen(QWidget):
             label_map_util.create_category_index_from_labelmap(
                 'models/HoldModel/hold-detection_label_map.pbtxt', use_display_name=True),
             use_normalized_coordinates=True,
-            max_boxes_to_draw=10,
-            min_score_thresh=.30,
-            agnostic_mode=False)
+            max_boxes_to_draw=20,
+            min_score_thresh=threshold,
+            agnostic_mode=False,
+            skip_scores=True)
 
         # Convert image to QImage
         height, width, channel = frame.shape

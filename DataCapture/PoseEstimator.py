@@ -85,10 +85,15 @@ class PoseEstimatorThread(QThread):
         gets the coordinates of the holds from the csv file
         """
         with open(self.holdCoordinatePath, 'r') as f:
-            holdCoordinatesListOfStrings = f.read().splitlines()
-            self.holdCoordinates = [ast.literal_eval(item) for item in holdCoordinatesListOfStrings]
-            print("Hold coordinates from PoseEstimationThread: ", self.holdCoordinates)
+            holdCoordinatesList = f.read().splitlines()
+            holdCoordinates = [ast.literal_eval(item) for item in holdCoordinatesList[1:]]
+            print("Hold coordinates from PoseEstimationThread: ", holdCoordinates)
         self.holdCoordinatesLoaded = True
+
+        # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
+        self.lowestHoldY = holdCoordinates[1][4]    
+        self.highestHoldY = holdCoordinates[-1][4]
+
         return
 
     def recordClimb(self, frame):
@@ -103,24 +108,24 @@ class PoseEstimatorThread(QThread):
         Args:
         frame (numpy.ndarray): The frame to run inference on.
         """
-        # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
-        lowestHoldY = self.holdCoordinates[-1][4]
-        highestHoldY = self.holdCoordinates[0][4]
-
         # Extract the relevant keypoints for both hands and feet
-        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:1] * frame.shape[0]
-        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']]
-        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']]
-        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']]
+        self.leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][2] > 0.3 else [None, None]
+        self.rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][2] > 0.3 else [None, None]
+        self.leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][2] > 0.3 else [None, None]
+        self.rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][2] > 0.3 else [None, None]
+        
+        if any([None in self.leftHand, None in self.rightHand, None in self.leftFoot, None in self.rightFoot]):
+            return
 
         # Check if all limbs are above the lowest hold
-        if self.isClimberInValidPosition():            # Climber is in a valid position, start recording the climb
+        if self.isClimberInValidPosition():         # Climber is in a valid position, start recording the climb
             if not self.climbBegun and not self.climbInProgress: # Climber was not in a valid position before, and is not in a valid position now
                 # Start a timer to check if the climber is still in a valid position after 1 second
                 self.climbBegun = True
                 self.startTime = time.time() * 1000 # in milliseconds
                 timer = QTimer()
-                timer.singleShot(1000, self.validateClimb)
+                timer.singleShot(1000, lambda: self.validateClimb())
+                print ("Climb begun.")
 
             # Store keypoints and timestamp
             centerOfGravity = self.calculateCenterOfGravity()
@@ -134,11 +139,12 @@ class PoseEstimatorThread(QThread):
                                  round(self.keypoints[usefulKeypoint][1], 5)])
             self.keypointsData.append(frameRow)
             # Check if both hands have been on or above the highest hold
-            if leftHand[0] < highestHoldY and rightHand[0] < highestHoldY:
-                self.climbSuccessful = True
+            if self.leftHand[1] < self.highestHoldY and self.rightHand[1] < self.highestHoldY:
+                self.climbSuccessful = True # Climber has reached the top
+                self.climbInProgress = False
 
 
-        elif not self.climbInProgress: # Climber was in a valid position before, but is not in a valid position now. The climb is finished - successful or not.
+        elif self.climbInProgress and self.climbBegun: # Climber was in a valid position before, but is not in a valid position now
             self.climbInProgress = False
             self.climbInProgressSignal.emit(False)
             # save keypoints data to a csv file
@@ -156,46 +162,50 @@ class PoseEstimatorThread(QThread):
         Check if the climber is still in a valid position after 1 second.
         If yes, the climb is in progress. If not, the climb is reset.
         """
-        self.climbBegun = False
+        # Yes this is bad practice, but it's the only way to stop the climb from being reset if limbs are not visible
+        if any([None in self.leftHand, None in self.rightHand, None in self.leftFoot, None in self.rightFoot]):
+            self.climbInProgress = True
+            self.climbInProgressSignal.emit(True)
+            print("Climb in progress!")
+            return
+        # self.climbBegun = False
         if self.isClimberInValidPosition():
             self.climbInProgress = True
             self.climbInProgressSignal.emit(True)
             print("Climb in progress!")
         else:
             self.climbInProgress = False
-            self.climbInProgressSignal.emit(False)
+            # may not be necessary to emit this signal 
+            # self.climbInProgressSignal.emit(False)
             self.keypointsData = []
             print("Climb reset.")
+
+        # print positions of 4 limbs and lowest hold for debugging
+        print(f"Left hand: {self.leftHand[0]}, {self.leftHand[1]}\n Right hand: {self.rightHand[0]}, {self.rightHand[1]}\n Left foot: {self.leftFoot[0]}, {self.leftFoot[1]}\n Right foot: {self.rightFoot[0]}, {self.rightFoot[1]}\n Lowest hold: {self.lowestHoldY}")
+
         
-    def isClimberInValidPosition(self):
+    def isClimberInValidPosition(self, buffer=0.05):
         """
         Check if the climber is in a valid position.
+
+        Args:
+        leftHand (list): Coordinates of the left hand (e.g., [x, y]) or None if the keypoint is not visible with a confidence score above the threshold.
+        rightHand (list): Coordinates of the right hand (e.g., [x, y]) ""
+        leftFoot (list): Coordinates of the left foot (e.g., [x, y]) ""
+        rightFoot (list): Coordinates of the right foot (e.g., [x, y])""
+        buffer (float): The buffer to add to the lowest hold so that limbs do not have to be exactly on the hold. Defaults to 0.05 (5% of the frame height). (0 <= buffer <= 1)
+
         Returns:
-        bool: True if the climber is in a valid position, False otherwise.
+        bool: True if the climber is in a valid position, False otherwise. 
         """
-        # Extract the relevant keypoints for both hands and feet
-        leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:2]
-        rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][0:2]
-        leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][0:2]
-        rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][0:2]
+        if buffer < 0 or buffer > 1:
+            raise ValueError("Buffer for lowest hold must be between 0 and 1. ")
 
-        # get shape of frame to convert from normalized coordinates to pixel coordinates
-        frameShape = self.inputDetails[0]['shape'][1:3]
-        print("frameShape: ", frameShape)
-
-        # change from normalized coordinates to pixel coordinates
-
-        # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
-        lowestHoldY = self.holdCoordinates[-1][4]
-
-        print("leftHand: ", leftHand)
-        print("rightHand: ", rightHand)
-        print("leftFoot: ", leftFoot)
-        print("rightFoot: ", rightFoot)
-        print("lowestHoldY: ", lowestHoldY)
+        # add a buffer to the lowest hold so that limbs do not have to be exactly on the hold
+        lowestHoldY = self.lowestHoldY + buffer
 
         # Check if all limbs are above the lowest hold
-        return leftHand[0] < lowestHoldY and rightHand[0] < lowestHoldY and leftFoot[0] < lowestHoldY and rightFoot[0] < lowestHoldY
+        return self.leftHand[0] < lowestHoldY and self.rightHand[0] < lowestHoldY and self.leftFoot[0] < lowestHoldY and self.rightFoot[0] < lowestHoldY
 
     def completeClimbDueToTimeout(self):
         """
@@ -209,17 +219,19 @@ class PoseEstimatorThread(QThread):
         self.climbFinishedSignal.emit(False)  # Mark the climb as unsuccessful
         print("Climb completed due to timeout, but not successful.")
     
-    def saveKeypointsData(self):
+    def saveKeypointsData(self, filename="output.csv"):
         """
         Save keypoints data to a CSV file.
         """
         if self.keypointsData:
-            filename = f"keypoints_data_{time.strftime('%Y%m%d%H%M%S')}.csv"
+            filename = f"output.csv"
+            csvHeader = ['Timestamp(ms)', 'Center of Gravity X', 'Center of Gravity Y', 'Left Arm Angle', 'Right Arm Angle']
+            for keypoint in PoseEstimatorThread.usefulKeypointDict.keys():
+                csvHeader.extend([f'{keypoint} X', f'{keypoint} Y'])
             with open(filename, 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
-                csvwriter.writerow(['Timestamp', 'Keypoints'])
-                for timestamp, keypoints in self.keypointsData:
-                    csvwriter.writerow([timestamp, keypoints])
+                csvwriter.writerow(csvHeader)
+                csvwriter.writerows(self.keypointsData)
             print(f"Keypoints data saved to {filename}")
             self.keypointsData = []
         

@@ -95,6 +95,7 @@ class MainWindow(QMainWindow):
         self.holdFindingScreen.setParent(None)
         self.setCentralWidget(self.climbingScreen)
         self.climbingScreen.cameraSender.frameSignal.connect(self.climbingScreen.onFrameSignal)
+        self.climbingScreen.poseEstimator.climbFinishedSignal.connect(self.onClimbFinished)
 
 
     @pyqtSlot()
@@ -129,6 +130,14 @@ class MainWindow(QMainWindow):
                 self.lobbyScreen = LobbyScreen(self)
                 self.splashScreen.setParent(None)
                 self.setCentralWidget(self.lobbyScreen)
+        pass
+
+    @pyqtSlot(bool)
+    def onClimbFinished(self, climbSuccessful):
+        self.climbFinished = True
+        self.resultsScreen = ResultsScreen(self, self.currentClimber, climbSuccessful)
+        self.climbingScreen.setParent(None)
+        self.setCentralWidget(self.resultsScreen)
         pass
         
     def onHoldsFound(self):

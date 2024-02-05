@@ -64,13 +64,13 @@ def measure_climbing_duration(data):
     holds_reached = 0
 
     for index, row in data.iterrows():
-        check_wrist_on_hold(row, start_hold_x, start_hold_y, end_hold_x, end_hold_y, threshold_distance):
+        check_wrist_on_hold(row, start_hold_x, start_hold_y, end_hold_x, end_hold_y, threshold_distance)
         if not timer_started:
             timer_started = True
             start_time = row['Timestamp(ms)']
-        holds_reached += 1  # Increment the count of holds reached
+            holds_reached += 1  # Increment the count of holds reached
         else:
-        if timer_started:
+            # if timer_started:
             end_time = row['Timestamp(ms)']
             return start_time, end_time, holds_reached
 
