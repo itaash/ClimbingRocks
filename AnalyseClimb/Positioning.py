@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 
 # Preprocess data, forward fill
@@ -46,9 +47,15 @@ def measure_arm_angle(data):
 
 
 # Function definition with separate results for right and left hands
-def calculate_time_on_holds(climb_data, holds_data, threshold_distance=2):
+def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance=2):
     result_df_left = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Left(ms)', 'Start_Timestamp_Left(ms)', 'End_Timestamp_Left(ms)'])
     result_df_right = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Right(ms)', 'Start_Timestamp_Right(ms)', 'End_Timestamp_Right(ms)'])
+
+    holds_data = pd.DataFrame({
+    'Hold_Id': holdsCoordinates["holdNumber"],
+    'Hold_X': holdsCoordinates["left"],
+    'Hold_Y': holdsCoordinates["top"],
+})
     
     for hold_index, hold_row in holds_data.iterrows():
         hold_id, hold_x, hold_y = hold_row
@@ -160,7 +167,7 @@ def calculate_smoothness(climb_data, left_hand_df, right_hand_df):
 
     # Sample usage of the functions
 def calculatePosition(climbData, holdsCoordinates):
-    climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
+    climbing_data = preprocess_data(climbData)  # Just do columns we need, not whole thing TO DO
     threshold_distance = 10 #THIS VALUE TO CHANGE WHEN WE START TESTING
     result_dataframe_left, result_dataframe_right = calculate_time_on_holds(climbData, holdsCoordinates, threshold_distance)
     smoothness_score = calculate_smoothness(climbing_data, result_dataframe_left, result_dataframe_right)
@@ -196,7 +203,19 @@ def visualisePosition(climbData, holdsCoordinates):
     plt.ylabel('Values')
     plt.title('Values vs Time with Threshold')
 
+    fig = ax.get_figure()
+
+    # Render the figure as an image
+    canvas = FigureCanvasAgg(fig)
+    canvas.draw()
+
+    # Convert the image to numpy array
+    img = np.array(canvas.renderer.buffer_rgba())
+
+    plt.close()  # Close the figure to free up resources
+
+    return img
+
     # Return the plot
-    return plt
     #graph 2 on top of each other, green zone is good, when you had good control the line is in the green and bad the line is in the clear
 
