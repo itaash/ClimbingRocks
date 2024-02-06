@@ -12,151 +12,159 @@ def preprocess_data(df):
     df.fillna(method='ffill', inplace=True)  # Fill NaN values in the DataFrame with last valid observation
     return df
 
-def calculate_distance(x1, y1, x2, y2):
-    return np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
+    result_df_left = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Left(ms)', 'Start_Timestamp_Left(ms)', 'End_Timestamp_Left(ms)'])
+    result_df_right = pd.DataFrame(columns=['Hold_Id', 'Total_Time_Right(ms)', 'Start_Timestamp_Right(ms)', 'End_Timestamp_Right(ms)'])
 
-# Check if both wrists are close enough to the designated hold 
-def check_wrist_on_hold(row, holdCoordinates, threshold):
-    left_wrist_distance = calculate_distance(row['left_wrist_X'], row['left_wrist_Y'], start_hold_x, start_hold_y)
-    right_wrist_distance = calculate_distance(row['right_wrist_X'], row['right_wrist_Y'], start_hold_x, start_hold_y)
-    return (left_wrist_distance <= threshold) and (right_wrist_distance <= threshold)
+    holds_data = pd.DataFrame({
+        'Hold_Id': holdsCoordinates["holdNumber"],
+        'Hold_X': holdsCoordinates["left"],
+        'Hold_Y': holdsCoordinates["top"],
+    })
 
-# Function to measure hesitation on each hold
-def measure_hesitation_on_holds(data, holdsCoordinates, threshold_distance, start_time, end_time):
-    holds_hesitation = {}  # Dictionary to store time spent on each hold
+    farthest_hold_left = 0
+    farthest_hold_right = 0
 
-    timer_started = False
-    current_hold = None
-    hold_start_time = None
+    for hold_index, hold_row in holds_data.iterrows():
+        hold_id, hold_x, hold_y = hold_row
 
-    for index, row in data.iterrows():
-        feet_off_ground = check_feet_off_ground(row, start_hold_x, start_hold_y, threshold_distance)
-        if feet_off_ground and check_wrist_on_hold(row, start_hold_x, start_hold_y, end_hold_x, end_hold_y, threshold_distance):
-            if not timer_started:
-                timer_started = True
+        # Filter the climb_data based on the hold coordinates and threshold for left hand
+        left_wrist_hold = climb_data[
+            ((climb_data['left_wrist_X'] - hold_x)**2 + (climb_data['left_wrist_Y'] - hold_y)**2) <= threshold_distance**2
+        ]
 
-            if timer_started:
-                for hold in holdsCoordinates:  # 'holds_coordinates' contains the coordinates of each hold
-                    if check_wrist_on_hold(row, hold[0], hold[1], hold[0], hold[1], threshold_distance) and current_hold != hold:
-                        if current_hold is not None:
-                            hold_end_time = row['Timestamp(ms)']
-                            hold_duration = hold_end_time - hold_start_time
-                            holds_hesitation[current_hold] = hold_duration
+        if not left_wrist_hold.empty:
+            farthest_hold_left = max(farthest_hold_left, hold_id)
 
-                        current_hold = hold
-                        hold_start_time = row['Timestamp(ms)']
+            # Calculate the total time spent on the hold by the left hand
+            total_time_on_hold_left = left_wrist_hold['Timestamp(ms)'].sum()
 
+            # Determine the start and end timestamps for the left hand
+            start_timestamp_left = left_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_left = left_wrist_hold['Timestamp(ms)'].max()
+
+            # Append the result to the left hand DataFrame
+            result_df_left = result_df_left.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Left(ms)': total_time_on_hold_left,
+                'Start_Timestamp_Left(ms)': start_timestamp_left,
+                'End_Timestamp_Left(ms)': end_timestamp_left
+            }, ignore_index=True)
         else:
-            if timer_started:
-                end_time = row['Timestamp(ms)']
-                break
+            # If hold was not held at all by the left hand, set values to 0
+            result_df_left = result_df_left.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Left(ms)': 0,
+                'Start_Timestamp_Left(ms)': 0,
+                'End_Timestamp_Left(ms)': 0
+            }, ignore_index=True)
 
-    if current_hold is not None and hold_start_time is not None:
-        hold_end_time = end_time
-        hold_duration = hold_end_time - hold_start_time
-        holds_hesitation[current_hold] = hold_duration
+        # Filter the climb_data based on the hold coordinates and threshold for right hand
+        right_wrist_hold = climb_data[
+            ((climb_data['right_wrist_X'] - hold_x)**2 + (climb_data['right_wrist_Y'] - hold_y)**2) <= threshold_distance**2
+        ]
 
-    return holds_hesitation
+        if not right_wrist_hold.empty:
+            farthest_hold_right = max(farthest_hold_right, hold_id)
+
+            # Calculate the total time spent on the hold by the right hand
+            total_time_on_hold_right = right_wrist_hold['Timestamp(ms)'].sum()
+
+            # Determine the start and end timestamps for the right hand
+            start_timestamp_right = right_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_right = right_wrist_hold['Timestamp(ms)'].max()
+
+            # Append the result to the right hand DataFrame
+            result_df_right = result_df_right.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Right(ms)': total_time_on_hold_right,
+                'Start_Timestamp_Right(ms)': start_timestamp_right,
+                'End_Timestamp_Right(ms)': end_timestamp_right
+            }, ignore_index=True)
+        else:
+            # If hold was not held at all by the right hand, set values to 0
+            result_df_right = result_df_right.append({
+                'Hold_Id': hold_id,
+                'Total_Time_Right(ms)': 0,
+                'Start_Timestamp_Right(ms)': 0,
+                'End_Timestamp_Right(ms)': 0
+            }, ignore_index=True)
+
+    return result_df_left, result_df_right, farthest_hold_left, farthest_hold_right
+
 
 # Function to measure climbing duration and count holds reached
-def measure_climbing_duration(data):
-    timer_started = False
-    start_time = None
-    holds_reached = 0
+def measure_climbing_duration(climbData):
 
-    for index, row in data.iterrows():
-        check_wrist_on_hold(row, start_hold_x, start_hold_y, end_hold_x, end_hold_y, threshold_distance)
-        if not timer_started:
-            timer_started = True
-            start_time = row['Timestamp(ms)']
-            holds_reached += 1  # Increment the count of holds reached
-        else:
-            # if timer_started:
-            end_time = row['Timestamp(ms)']
-            return start_time, end_time, holds_reached
+    # Extract the first and last values from the column
+    first_value = climbData['Timestamp(ms)'].iloc[0]
+    last_value = climbData['Timestamp(ms)'].iloc[-1]
 
-    return None, None, None
+    # Subtract the first value from the last value
+    timeclimb = last_value - first_value
 
-
-# Function to count holds reached before falling
-def count_holds_reached(climbing_data, start_hold_x, start_hold_y, end_hold_x, end_hold_y, ground_x, ground_y, threshold_distance, threshold_ground_distance):
-    start_time, end_time, holds_reached = measure_climbing_duration(climbing_data, start_hold_x, start_hold_y, end_hold_x, end_hold_y,
-        ground_x, ground_y, threshold_distance, threshold_ground_distance
-    )
-
-    if holds_reached is not None:
-        print(f"The climber reached {holds_reached} holds before falling.")
-    else:
-        print("The climber did not fall during the climb.")
+    return timeclimb
 
 
 # Calculate score based on climbing duration and holds reached
-def calculate_score(climbing_duration, max_score, holds_reached, total_holds):
-    if climbing_duration is not None:
-        if holds_reached == total_holds:  # Climber completed the route
-            return max_score  # Return the maximum possible score (100)
-        else:
-            missed_holds = total_holds - holds_reached
-            penalty = 20 * missed_holds  # Subtract 20 points for each hold missed
-            score = max_score - penalty
-            return max(0, round(score, 2))  # Ensure score doesn't go below 0
+def calculate_hold_score(farthest_left, farthest_right, total_holds):
+    if farthest_left & farthest_right == total_holds:  # Climber completed the route
+        return 100  # Return the maximum possible score (100)
+    else:
+        missed_holds = total_holds - max(farthest_left, farthest_right)
+        penalty = 20 * missed_holds  # Subtract 20 points for each hold missed
+        score = 100 - penalty
+        return max(0, round(score, 2))  # Ensure score doesn't go below 0
+   
+
+
+def calculate_hesitation_score(results_left, results_right):
+
+    error_factor = 20 # TO BE CHANGED WHEN TESTING
+
+    # Calculate the absolute difference between consecutive averages for left hand
+    results_left['Time_Difference_Left'] = abs(results_left['Average_Time_Left(ms)'].diff())
+
+    # Calculate the overall deviation score for left hand
+    left_deviation_score = results_left['Time_Difference_Left'].mean()
+
+    # Calculate the absolute difference between consecutive averages for right hand
+    results_right['Time_Difference_Right'] = abs(results_right['Average_Time_Right(ms)'].diff())
+
+    # Calculate the overall deviation score for right hand
+    right_deviation_score = results_right['Time_Difference_Right'].mean()
+
+    hesitation_score = (left_deviation_score + right_deviation_score) * error_factor
+
+    return hesitation_score
+
+
+def calculate_time_score(timeclimb):
+    #score
     return 0
 
 
-def calculate_hesitation_score(holds_hesitation):
-    total_time = sum(holds_hesitation.values())
-    total_holds = len(holds_hesitation)
-
-    if total_holds == 0 or total_time == 0:
-        return 0
-
-    average_time_per_hold = total_time / total_holds
-    max_score = 100
-
-    # Calculate the deviation of each hold's time from the average
-    deviations = [abs(time - average_time_per_hold) for time in holds_hesitation.values()]
-
-    # Calculate the score based on the deviation from average time spent on each hold
-    max_deviation = max(deviations)
-    score = max_score - ((max_deviation / average_time_per_hold) * max_score)
-
-    return max(0, round(score, 2))
-
-
 # Function to calculate combined score by averaging climbing duration score and hesitation score
-def calculate_combined_score(climbing_duration_score, hesitation_score):
-    return (climbing_duration_score + hesitation_score) / 2
+def calculate_combined_score(climbing_duration_score, hesitation_score, hold_score):
+    return (climbing_duration_score + hesitation_score + hold_score) / 3
     
-
-
 
 def calculateProgress(climbData, holdsCoordinates):
     threshold_distance = 10 # specify the threshold distance for proximity to the holds
 
     climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
+    result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
+    timeclimb = measure_climbing_duration(climbing_data)
 
-    start_time, end_time, _ = measure_climbing_duration(climbing_data, holdsCoordinates, threshold_distance)
+    hesitation_score = calculate_hesitation_score(result_left, result_right)
+    hold_score = calculate_hold_score(farthest_left, farthest_right)
+    climbing_duration_score = calculate_time_score(timeclimb)
 
-    if start_time is not None and end_time is not None:
-        climbing_duration = end_time - start_time
-        holds_hesitation = measure_hesitation_on_holds(
-            climbing_data, holdsCoordinates,
-            threshold_distance, start_time, end_time
-        )
+    combined_score = calculate_combined_score(climbing_duration_score, hesitation_score, hold_score)
 
-        hesitation_score = calculate_hesitation_score(holds_hesitation)
-        climbing_duration_score = calculate_score(climbing_duration, max_score, holds_reached, total_holds)
+    return combined_score, climbing_duration_score, hesitation_score, hold_score
 
-        combined_score = calculate_combined_score(climbing_duration_score, hesitation_score)
-        return combined_score, climbing_duration_score, hesitation_score
 
-    else:
-        holds_reaches = count_holds_reached(climbing_data, holdsCoordinates, threshold_distance)
-
-        climbing_duration_score = calculate_score(climbing_duration, max_score, holds_reached, total_holds)
-        return combined_score, climbing_duration_score, hesitation_score
-
-#NEED TO MAKE SURE HOLDS_HESITATION IS THE RIGHT FORMAT FOR TESTING
 def visualiseProgress(holds_hesitation):
 
     data = pd.DataFrame[holds_hesitation]
