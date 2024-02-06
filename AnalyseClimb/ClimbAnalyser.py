@@ -2,6 +2,7 @@ import os
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from AnalyseClimb import Pressure, Positioning, Progress
+import pandas as pd
 
 
 class ClimbAnalyserThread(QThread):
@@ -55,6 +56,9 @@ class ClimbAnalyserThread(QThread):
 
         if any([len(climbData) == 0, len(holdsCoordinates) == 0, len(forceData) == 0]):
             raise FileNotFoundError("Could not find data files")
+        
+        climbData = pd.DataFrame(climbData)
+        holdsCoordinates = pd.DataFrame(holdsCoordinates)
 
         # Calculate pressure
         self.pressureSubmetrics = Pressure.calculatePressure(forceData)

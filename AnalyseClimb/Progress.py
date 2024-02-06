@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 
 #holds_reached, total_holds, holds_coordinates, starting holds and ending holds to incorporate
@@ -168,4 +169,16 @@ def visualiseProgress(holds_hesitation):
     plt.xticks([])
     plt.title('Time on each hold')
 
-    return graph
+    # Get the figure
+    fig = graph.get_figure()
+
+    # Render the figure as an image
+    canvas = FigureCanvasAgg(fig)
+    canvas.draw()
+
+    # Convert the image to numpy array
+    img = np.array(canvas.renderer.buffer_rgba())
+
+    plt.close()  # Close the figure to free up resources
+
+    return img
