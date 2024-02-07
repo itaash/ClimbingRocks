@@ -44,23 +44,22 @@ class ClimbAnalyserThread(QThread):
         forceData = []
 
         # Read climb data from file
-        with open(climbDataDirectory, "r") as file:
-            climbData = file.readlines()
+        climbData = pd.read_csv(climbDataDirectory)
 
         # Read holds coordinates from file
-        with open(holdsCoordinatesDirectory, "r") as file:
-            holdsCoordinates = file.readlines()
-
+        holdsCoordinates = pd.read_csv(holdsCoordinatesDirectory)
+       
         # Read force data from file
-        with open(forceDataDirectory, "r") as file:
-            forceData = file.readlines()
+        forceData = pd.read_csv(forceDataDirectory)
 
         if any([len(climbData) == 0, len(holdsCoordinates) == 0, len(forceData) == 0]):
             raise FileNotFoundError("Could not find data files")
         
         climbData = pd.DataFrame(climbData)
-        holdsCoordinates = pd.DataFrame(holdsCoordinates)
+        print(climbData.columns)
 
+        holdsCoordinates = pd.DataFrame(holdsCoordinates)
+        print(holdsCoordinates.columns)
         # Calculate pressure
         self.pressureSubmetrics = Pressure.calculatePressure(forceData)
         self.pressureVisualisation = Pressure.visualisePressure(forceData, self.pressureSubmetrics)
