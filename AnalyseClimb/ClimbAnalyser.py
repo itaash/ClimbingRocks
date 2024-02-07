@@ -15,16 +15,16 @@ class ClimbAnalyserThread(QThread):
                         "hesitation": "Try to be deliberate in your movements"
     }
 
-    metricsWeights = {"pressure": 0.5, "positioning": 0.3, "progress": 0.2}
+    metricsWeights = {"pressure": 0.3, "positioning": 0.4, "progress": 0.3}
 
-    submetricsLabels = {"pressure": ["submetric1", "submetric2", "submetric3"],
-                        "positioning": ["submetric1", "submetric2", "submetric3"],
-                        "progress": ["submetric1", "submetric2", "submetric3"]
+    submetricsLabels = {"pressure": ["Strength", "Adjustments"],
+                        "positioning": ["Smoothness", "Arm Bend"],
+                        "progress": ["Completion", "Speed", "Hesitation"]
     }
 
-    submetricsWeights = {"pressure": [0.3, 0.3, 0.4],
-                         "positioning": [0.4, 0.3, 0.3],
-                         "progress": [0.3, 0.4, 0.3]
+    submetricsWeights = {"pressure": [0.5, 0.5],
+                         "positioning": [0.5, 0.5],
+                         "progress": [0.4, 0.3, 0.3]
     }
 
     def __init__(self, climberName, parent):
