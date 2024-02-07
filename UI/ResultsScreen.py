@@ -11,13 +11,22 @@ class ResultsScreen(QWidget):
         self.mainLayout = QVBoxLayout(self)
         self.mainLayout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         
+
         # Add white space on the top
-        self.mainLayout.addSpacing(20)
+        self.mainLayout.addSpacing(45)
 
         #intro text
         self.climbFinishedLabel = QLabel()
-        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; padding: 30px; text-align: left;")
-        self.climbFinishedLabel.setText(f"Climb finished, {climberName}, we're analysing your climb now...")
+        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; padding: 10px 20px; border-radius: 10px;")
+        self.climbFinishedLabel.setText(f"\t    Climb finished, {climberName}, we're analysing your climb now...")
+
+
+        # Add the logo to the top left corner
+        self.logoLabel = QLabel(self)
+        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(160, Qt.SmoothTransformation))
+        self.logoLabel.setStyleSheet("background-color: transparent;")
+        self.logoLabel.setFixedSize(160, 160)
+        self.logoLabel.move(35, 14)
 
 
         self.climbSuccessful = climbSuccessful
@@ -26,15 +35,15 @@ class ResultsScreen(QWidget):
         self.mainLayout.addWidget(self.climbFinishedLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         # Add space
-        self.mainLayout.addSpacing(30)
+        self.mainLayout.addSpacing(100)
 
         # Create the central hbox layout with three widgets
         hboxLayout = QHBoxLayout()
         hboxLayout.setSpacing(50)
         hboxLayout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
-        self.pressureWidget = MetricWidget("Pressure", "UI/UIAssets/loading.gif", colour='#A951F6', parent=self)
-        self.positioningWidget = MetricWidget("Positioning", "UI/UIAssets/loading.gif", colour='#3EE2F4', parent=self)
-        self.progressWidget = MetricWidget("Progress", "UI/UIAssets/loading.gif", colour='#DB5764', parent=self)
+        self.pressureWidget = MetricWidget("Pressure", "UI/UIAssets/loading.gif", colour='#0A9DAE', parent=self)
+        self.positioningWidget = MetricWidget("Positioning", "UI/UIAssets/loading.gif", colour='#CA2B3B', parent=self)
+        self.progressWidget = MetricWidget("Progress", "UI/UIAssets/loading.gif", colour='#8C16F3', parent=self)
         hboxLayout.addWidget(self.pressureWidget)
         hboxLayout.addWidget(self.positioningWidget)
         hboxLayout.addWidget(self.progressWidget)
@@ -45,10 +54,11 @@ class ResultsScreen(QWidget):
 
         # Create the "Click to see Climbing tip" button
         self.tipButton = QPushButton("Click to see \nClimbing tip", self)
-        self.tipButton.setStyleSheet("font-size: 20px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #c58af9; border: none; padding: 10px 20px; border-radius: 10px;")
+        self.tipButton.setStyleSheet("font-size: 20px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px 20px; border-radius: 10px;")
         self.tipButton.setFixedSize(200, 100)
         self.tipButton.move(parent.width() - self.tipButton.width() - 60, parent.height() - self.tipButton.height() - 60)
         self.tipButton.clicked.connect(self.goToTip)
+        self.tipButton.setDisabled(True)
 
         # Create and start a 20-second timer
         self.timer = QTimer(self)
@@ -78,6 +88,8 @@ class ResultsScreen(QWidget):
         else:
             self.climbFinishedLabel.setText(f"Skill issue, {self.climberName}, here's an analysis of your lame attempt")
 
+        self.tipButton.setDisabled(False)
+        
         pressureSubmetrics = self.climbAnalyser.getPressureSubmetrics()
         pressureVisualisation = self.climbAnalyser.getPressureVisualisation()
 
@@ -98,7 +110,7 @@ class ResultsScreen(QWidget):
 
 
 class MetricWidget(QWidget):
-    def __init__(self, metric, image, score=100, colour = '#C58AF9', parent=None):
+    def __init__(self, metric, image, colour, score=100, parent=None):
         super(MetricWidget, self).__init__(parent)
 
         # Set up the layout
@@ -112,13 +124,13 @@ class MetricWidget(QWidget):
         labelLogo.setPixmap(QPixmap(f"UI/UIAssets/{metric}Icon.png").scaledToWidth(40, Qt.SmoothTransformation))
         # labelLogo.setPixmap(QPixmap(f"UI/UIAssets/logo.png").scaledToWidth(40, Qt.SmoothTransformation))
         labelText = QLabel(metric, self)
-        labelText.setStyleSheet("font-size: 24px; color: #222222; font-weight: bold; font-family: 'DM Sans'; text-align: left;")
-        labelText.setFixedWidth(140)
+        labelText.setStyleSheet("font-size: 24px; color: #ffffff; font-family: 'Bungee'; text-align: left;")
+        labelText.setFixedWidth(180)
         labelText.setFixedHeight(40)
 
         self.scoreLabel = QLabel(str(score))
         self.scoreLabel.setFixedWidth(60)
-        self.scoreLabel.setStyleSheet("font-size: 28px; color: #222222; font-family: 'DM Sans'; text-align: right; font-weight: bold;")
+        self.scoreLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; text-align: right; font-weight: bold;")
         
         labelLayout.addWidget(labelLogo)
         labelLayout.addSpacing(10)
@@ -133,7 +145,8 @@ class MetricWidget(QWidget):
         # add the image
         self.image = QLabel()
         self.image.setStyleSheet("background-color: #ffffff; border-radius: 15%")
-        self.image.setPixmap(QPixmap(image).scaledToHeight(270, Qt.SmoothTransformation))
+        # self.image.setPixmap(QPixmap(image).scaledToHeight(270, Qt.SmoothTransformation))
+        self.image.setPixmap(QPixmap(image).scaledToWidth(300, Qt.SmoothTransformation))
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.image, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -141,7 +154,7 @@ class MetricWidget(QWidget):
 
         # Set the layout for the widget
         self.setLayout(layout)
-        self.setFixedSize(350, 450)
+        self.setFixedSize(360, 450)
 
         # Set the style for the widget - a rounded rectangle with a shadow
         metricWrapper = QWidget(self)
@@ -197,7 +210,7 @@ if __name__ == "__main__":
     window.setWindowTitle("Climbing Rocks")
     window.setFixedSize(1280, 800)
     window.setFont(QFont("DM Sans"))
-    window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
+    window.setStyleSheet("background-color: #333333; font-size: 20px; color: #ffffff;")
     
     window.resultsScreen = ResultsScreen("Danica", False, window)
     window.setCentralWidget(window.resultsScreen)    
