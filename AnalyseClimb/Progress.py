@@ -162,7 +162,7 @@ def calculateProgress(climbData, holdsCoordinates):
 
     combined_score = calculate_combined_score(climbing_duration_score, hesitation_score, hold_score)
 
-    return combined_score, climbing_duration_score, hesitation_score, hold_score
+    return [combined_score, climbing_duration_score, hesitation_score, hold_score]
 
 
 def visualiseProgress(holds_hesitation):

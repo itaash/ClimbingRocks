@@ -224,10 +224,10 @@ class PoseEstimatorThread(QThread):
         Save keypoints data to a CSV file.
         """
         if self.keypointsData:
-            filename = f"output.csv"
+            filename = f"data/{filename}"
             csvHeader = ['Timestamp(ms)', 'Center of Gravity X', 'Center of Gravity Y', 'Left Arm Angle', 'Right Arm Angle']
             for keypoint in PoseEstimatorThread.usefulKeypointDict.keys():
-                csvHeader.extend([f'{keypoint} X', f'{keypoint} Y'])
+                csvHeader.extend([f'{keypoint}_X', f'{keypoint}_Y'])
             with open(filename, 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
                 csvwriter.writerow(csvHeader)

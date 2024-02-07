@@ -174,7 +174,7 @@ def calculatePosition(climbData, holdsCoordinates):
     arm_angle_score = measure_arm_angle(climbing_data)
 
     combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
-    return round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)
+    return [round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)]
 
 
 def visualisePosition(climbData, holdsCoordinates):

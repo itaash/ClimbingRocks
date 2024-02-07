@@ -33,10 +33,11 @@ class ClimbAnalyserThread(QThread):
         self.parent = parent
 
     def run(self):
-        dataDirectory = "/c:/Users/itaas/Documents/UBC/Year 4 (2023-2024)/IGEN 430/ClimbingRocks/data"
-        climbDataDirectory = dataDirectory + "/output.csv"
-        holdsCoordinatesDirectory = dataDirectory + "/holdsCoordinates.csv"
-        forceDataDirectory = dataDirectory + "/forceData.csv"
+        cwd = os.getcwd()
+        dataDirectory = os.path.join(cwd, 'data')
+        climbDataDirectory = os.path.join(dataDirectory, "output.csv")   
+        holdsCoordinatesDirectory = os.path.join(dataDirectory, "holdCoordinates.csv")
+        forceDataDirectory = os.path.join(dataDirectory, "forceData.csv")
 
         climbData = []
         holdsCoordinates = []

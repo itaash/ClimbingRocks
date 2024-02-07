@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread, QRect
+from PyQt5.QtCore import pyqtSignal, QThread
 from PyQt5.QtGui import QPixmap, QImage
 import logging
 import argparse
