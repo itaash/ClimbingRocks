@@ -45,20 +45,27 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
             end_timestamp_left = left_wrist_hold['Timestamp(ms) '].max()
 
             # Append the result to the left hand DataFrame
-            result_df_left = result_df_left.append({
-                'Hold_Id': hold_id,
-                'Total_Time_Left(ms)': total_time_on_hold_left,
-                'Start_Timestamp_Left(ms)': start_timestamp_left,
-                'End_Timestamp_Left(ms)': end_timestamp_left
-            }, ignore_index=True)
+            result_df_left = pd.concat([
+                result_df_left,
+                pd.DataFrame({
+                    'Hold_Id': hold_id,
+                    'Total_Time_Left(ms)': total_time_on_hold_left,
+                    'Start_Timestamp_Left(ms)': start_timestamp_left,
+                    'End_Timestamp_Left(ms)': end_timestamp_left
+                }, index=[0])
+            ], ignore_index=True)
         else:
             # If hold was not held at all by the left hand, set values to 0
-            result_df_left = result_df_left.append({
-                'Hold_Id': hold_id,
-                'Total_Time_Left(ms)': 0,
-                'Start_Timestamp_Left(ms)': 0,
-                'End_Timestamp_Left(ms)': 0
-            }, ignore_index=True)
+            result_df_left = pd.concat([
+                result_df_left,
+                pd.DataFrame({
+                    'Hold_Id': hold_id,
+                    'Total_Time_Left(ms)': 0,
+                    'Start_Timestamp_Left(ms)': 0,
+                    'End_Timestamp_Left(ms)': 0
+                }, index=[0])
+            ], ignore_index=True)
+
 
         # Filter the climb_data based on the hold coordinates and threshold for right hand
         right_wrist_hold = climb_data[
@@ -76,20 +83,28 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
             end_timestamp_right = right_wrist_hold['Timestamp(ms) '].max()
 
             # Append the result to the right hand DataFrame
-            result_df_right = result_df_right.append({
-                'Hold_Id': hold_id,
-                'Total_Time_Right(ms)': total_time_on_hold_right,
-                'Start_Timestamp_Right(ms)': start_timestamp_right,
-                'End_Timestamp_Right(ms)': end_timestamp_right
-            }, ignore_index=True)
+            result_df_right = pd.concat([
+                result_df_right,
+                pd.DataFrame({
+                    'Hold_Id': hold_id,
+                    'Total_Time_Right(ms)': total_time_on_hold_right,
+                    'Start_Timestamp_Right(ms)': start_timestamp_right,
+                    'End_Timestamp_Right(ms)': end_timestamp_right
+                }, index=[0])
+            ], ignore_index=True)
+
         else:
             # If hold was not held at all by the right hand, set values to 0
-            result_df_right = result_df_right.append({
-                'Hold_Id': hold_id,
-                'Total_Time_Right(ms)': 0,
-                'Start_Timestamp_Right(ms)': 0,
-                'End_Timestamp_Right(ms)': 0
-            }, ignore_index=True)
+            result_df_right = pd.concat([
+                result_df_right,
+                pd.DataFrame({
+                    'Hold_Id': hold_id,
+                    'Total_Time_Right(ms)': 0,
+                    'Start_Timestamp_Right(ms)': 0,
+                    'End_Timestamp_Right(ms)': 0
+                }, index=[0])
+            ], ignore_index=True)
+
 
     return result_df_left, result_df_right, farthest_hold_left, farthest_hold_right
 
