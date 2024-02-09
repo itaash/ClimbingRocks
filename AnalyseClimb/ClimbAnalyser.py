@@ -8,9 +8,9 @@ import pandas as pd
 class ClimbAnalyserThread(QThread):
     ClimbAnalysisComplete = pyqtSignal()  # Signal to indicate that analysis is complete
 
-    climbingTipsDict = { "arm-bend": "Try to keep your arms straighter",
-                         "hip-distance": "Try to keep your hips closer to the wall",
-                         "speed": "Try to climb faster",
+    climbingTipsDict = {"arm-bend": "Try to keep your arms straighter",
+                        "hip-distance": "Try to keep your hips closer to the wall",
+                        "speed": "Try to climb faster",
                         "grip-strength": "Try to improve your grip strength",
                         "hesitation": "Try to be deliberate in your movements"
     }
@@ -106,5 +106,8 @@ class ClimbAnalyserThread(QThread):
         """
         calculates the climbing score based on the weighs of the metrics and submetrics
         """
-        # TODO: implement this
-        pass
+        overallScore = ClimbAnalyserThread.metricsWeights["pressure"] * self.pressureSubmetrics[0] + \
+                        ClimbAnalyserThread.metricsWeights["positioning"] * self.positionSubmetrics[0] + \
+                        ClimbAnalyserThread.metricsWeights["progress"] * self.progressSubmetrics[0]
+       
+        return round(overallScore)

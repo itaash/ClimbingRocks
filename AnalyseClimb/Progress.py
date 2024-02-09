@@ -31,18 +31,18 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
 
         # Filter the climb_data based on the hold coordinates and threshold for left hand
         left_wrist_hold = climb_data[
-            ((climb_data['left_wrist_X '] - hold_x)**2 + (climb_data['left_wrist_Y '] - hold_y)**2) <= threshold_distance**2
+            ((climb_data['left_wrist_X'] - hold_x)**2 + (climb_data['left_wrist_Y'] - hold_y)**2) <= threshold_distance**2
         ]
 
         if not left_wrist_hold.empty:
             farthest_hold_left = max(farthest_hold_left, hold_id)
 
             # Calculate the total time spent on the hold by the left hand
-            total_time_on_hold_left = left_wrist_hold['Timestamp(ms) '].sum()
+            total_time_on_hold_left = left_wrist_hold['Timestamp(ms)'].sum()
 
             # Determine the start and end timestamps for the left hand
-            start_timestamp_left = left_wrist_hold['Timestamp(ms) '].min()
-            end_timestamp_left = left_wrist_hold['Timestamp(ms) '].max()
+            start_timestamp_left = left_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_left = left_wrist_hold['Timestamp(ms)'].max()
 
             # Append the result to the left hand DataFrame
             result_df_left = pd.concat([
@@ -69,18 +69,18 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
 
         # Filter the climb_data based on the hold coordinates and threshold for right hand
         right_wrist_hold = climb_data[
-            ((climb_data['right_wrist_X '] - hold_x)**2 + (climb_data['right_wrist_Y '] - hold_y)**2) <= threshold_distance**2
+            ((climb_data['right_wrist_X'] - hold_x)**2 + (climb_data['right_wrist_Y'] - hold_y)**2) <= threshold_distance**2
         ]
 
         if not right_wrist_hold.empty:
             farthest_hold_right = max(farthest_hold_right, hold_id)
 
             # Calculate the total time spent on the hold by the right hand
-            total_time_on_hold_right = right_wrist_hold['Timestamp(ms) '].sum()
+            total_time_on_hold_right = right_wrist_hold['Timestamp(ms)'].sum()
 
             # Determine the start and end timestamps for the right hand
-            start_timestamp_right = right_wrist_hold['Timestamp(ms) '].min()
-            end_timestamp_right = right_wrist_hold['Timestamp(ms) '].max()
+            start_timestamp_right = right_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_right = right_wrist_hold['Timestamp(ms)'].max()
 
             # Append the result to the right hand DataFrame
             result_df_right = pd.concat([
@@ -113,8 +113,8 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance):
 def measure_climbing_duration(climbData):
 
     # Extract the first and last values from the column
-    first_value = climbData['Timestamp(ms) '].iloc[0]
-    last_value = climbData['Timestamp(ms) '].iloc[-1]
+    first_value = climbData['Timestamp(ms)'].iloc[0]
+    last_value = climbData['Timestamp(ms)'].iloc[-1]
 
     # Subtract the first value from the last value
     timeclimb = last_value - first_value

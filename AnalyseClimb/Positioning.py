@@ -21,12 +21,12 @@ def measure_arm_angle(data):
     num_high_angles = 0
 
     # Convert 'Left Arm Angle' and 'Right Arm Angle' columns to numeric
-    data['Left Arm Angle '] = pd.to_numeric(data['Left Arm Angle '], errors='coerce')
-    data['Right Arm Angle '] = pd.to_numeric(data['Right Arm Angle '], errors='coerce')
+    data['Left Arm Angle'] = pd.to_numeric(data['Left Arm Angle'], errors='coerce')
+    data['Right Arm Angle'] = pd.to_numeric(data['Right Arm Angle'], errors='coerce')
 
     for index, row in data.iterrows():
-        left_arm_angle = row['Left Arm Angle ']
-        right_arm_angle = row['Right Arm Angle ']
+        left_arm_angle = row['Left Arm Angle']
+        right_arm_angle = row['Right Arm Angle']
 
         # Check for NaN values after conversion
         if pd.notna(left_arm_angle) and pd.notna(right_arm_angle):
@@ -66,16 +66,16 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance=2):
 
         # Filter the climb_data based on the hold coordinates and threshold for left hand
         left_wrist_hold = climb_data[
-            ((climb_data['left_wrist_X '] - hold_x)**2 + (climb_data['left_wrist_Y '] - hold_y)**2) <= threshold_distance**2
+            ((climb_data['left_wrist_X'] - hold_x)**2 + (climb_data['left_wrist_Y'] - hold_y)**2) <= threshold_distance**2
         ]
 
         if not left_wrist_hold.empty:
             # Calculate the total time spent on the hold by the left hand
-            total_time_on_hold_left = left_wrist_hold['Timestamp(ms) '].sum()
+            total_time_on_hold_left = left_wrist_hold['Timestamp(ms)'].sum()
 
             # Determine the start and end timestamps for the left hand
-            start_timestamp_left = left_wrist_hold['Timestamp(ms) '].min()
-            end_timestamp_left = left_wrist_hold['Timestamp(ms) '].max()
+            start_timestamp_left = left_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_left = left_wrist_hold['Timestamp(ms)'].max()
 
             # Append the result to the left hand DataFrame
             result_df_left = pd.concat([
@@ -103,16 +103,16 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance=2):
 
         # Filter the climb_data based on the hold coordinates and threshold for right hand
         right_wrist_hold = climb_data[
-            ((climb_data['right_wrist_X '] - hold_x)**2 + (climb_data['right_wrist_Y '] - hold_y)**2) <= threshold_distance**2
+            ((climb_data['right_wrist_X'] - hold_x)**2 + (climb_data['right_wrist_Y'] - hold_y)**2) <= threshold_distance**2
         ]
 
         if not right_wrist_hold.empty:
             # Calculate the total time spent on the hold by the right hand
-            total_time_on_hold_right = right_wrist_hold['Timestamp(ms) '].sum()
+            total_time_on_hold_right = right_wrist_hold['Timestamp(ms)'].sum()
 
             # Determine the start and end timestamps for the right hand
-            start_timestamp_right = right_wrist_hold['Timestamp(ms) '].min()
-            end_timestamp_right = right_wrist_hold['Timestamp(ms) '].max()
+            start_timestamp_right = right_wrist_hold['Timestamp(ms)'].min()
+            end_timestamp_right = right_wrist_hold['Timestamp(ms)'].max()
 
             # Append the result to the right hand DataFrame
             result_df_right = pd.concat([
@@ -161,13 +161,13 @@ def calculate_smoothness(climb_data, left_hand_df, right_hand_df):
 
         # Filter climb data for the common timestamp period
         common_data = climb_data[
-            (climb_data['Timestamp(ms) '] >= start_time_common) &
-            (climb_data['Timestamp(ms) '] <= end_time_common)
+            (climb_data['Timestamp(ms)'] >= start_time_common) &
+            (climb_data['Timestamp(ms)'] <= end_time_common)
         ]
 
         # Calculate the standard deviation of 'Center of Gravity X' and 'Center of Gravity Y'
-        cog_x_std = common_data['Center of Gravity X '].std()
-        cog_y_std = common_data['Center of Gravity Y '].std()
+        cog_x_std = common_data['Center of Gravity X'].std()
+        cog_y_std = common_data['Center of Gravity Y'].std()
 
         # Append to the result DataFrame
         common_timestamps_df = pd.concat([
@@ -198,13 +198,13 @@ def calculatePosition(climbData, holdsCoordinates):
     arm_angle_score = measure_arm_angle(climbing_data)
 
     combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
-    return round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)
+    return [round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)]
 
 
 def visualisePosition(climbData, holdsCoordinates):
     # Create a DataFrame
     threshold = 5 #VALUE TO BE CHANGED WHEN TESTING
-    data = {'Time': climbData['Timestamp(ms) '], 'Values': climbData['Center of Gravity X ']}
+    data = {'Time': climbData['Timestamp(ms)'], 'Values': climbData['Center of Gravity X']}
     df = pd.DataFrame(data)
 
     # Set up the seaborn style

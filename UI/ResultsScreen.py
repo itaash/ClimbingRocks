@@ -13,20 +13,21 @@ class ResultsScreen(QWidget):
         
 
         # Add white space on the top
-        self.mainLayout.addSpacing(45)
+        self.mainLayout.addSpacing(35)
 
         #intro text
         self.climbFinishedLabel = QLabel()
-        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; padding: 10px 20px; border-radius: 10px;")
-        self.climbFinishedLabel.setText(f"\t    Climb finished, {climberName}, we're analysing your climb now...")
+        self.climbFinishedLabel.setIndent(180)
+        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; padding: 10px; border-radius: 10px;")
+        self.climbFinishedLabel.setText(f"Climb finished, {climberName}, we're analysing your climb now...\n\n")
 
 
         # Add the logo to the top left corner
         self.logoLabel = QLabel(self)
-        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(160, Qt.SmoothTransformation))
+        self.logoLabel.setPixmap(QPixmap("UI/UIAssets/logo.png").scaledToWidth(120, Qt.SmoothTransformation))
         self.logoLabel.setStyleSheet("background-color: transparent;")
-        self.logoLabel.setFixedSize(160, 160)
-        self.logoLabel.move(35, 14)
+        self.logoLabel.setFixedSize(120, 120)
+        self.logoLabel.move(35, 35)
 
 
         self.climbSuccessful = climbSuccessful
@@ -35,15 +36,15 @@ class ResultsScreen(QWidget):
         self.mainLayout.addWidget(self.climbFinishedLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         # Add space
-        self.mainLayout.addSpacing(100)
+        self.mainLayout.addSpacing(60)
 
         # Create the central hbox layout with three widgets
         hboxLayout = QHBoxLayout()
         hboxLayout.setSpacing(50)
         hboxLayout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
-        self.pressureWidget = MetricWidget("Pressure", "UI/UIAssets/loading.gif", colour='#0A9DAE', parent=self)
-        self.positioningWidget = MetricWidget("Positioning", "UI/UIAssets/loading.gif", colour='#CA2B3B', parent=self)
-        self.progressWidget = MetricWidget("Progress", "UI/UIAssets/loading.gif", colour='#8C16F3', parent=self)
+        self.pressureWidget = MetricWidget("Pressure", "UI/UIAssets/loading.gif", ClimbAnalyserThread.submetricsLabels["pressure"], colour='#0A9DAE', parent=self)
+        self.positioningWidget = MetricWidget("Positioning", "UI/UIAssets/loading.gif", submetrics = ClimbAnalyserThread.submetricsLabels["positioning"], colour='#CA2B3B', parent=self)
+        self.progressWidget = MetricWidget("Progress", "UI/UIAssets/loading.gif", submetrics = ClimbAnalyserThread.submetricsLabels["progress"], colour='#8C16F3', parent=self)
         hboxLayout.addWidget(self.pressureWidget)
         hboxLayout.addWidget(self.positioningWidget)
         hboxLayout.addWidget(self.progressWidget)
@@ -54,21 +55,25 @@ class ResultsScreen(QWidget):
 
         # Create the "Click to see Climbing tip" button
         self.tipButton = QPushButton("Click to see \nClimbing tip", self)
-        self.tipButton.setStyleSheet("font-size: 20px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px 20px; border-radius: 10px;")
-        self.tipButton.setFixedSize(200, 100)
-        self.tipButton.move(parent.width() - self.tipButton.width() - 60, parent.height() - self.tipButton.height() - 60)
+        self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px; border-radius: 20px;")
+        self.tipButton.setFixedSize(220, 100)
+        self.tipButton.move(parent.width() - self.tipButton.width() - 50, 50)
         self.tipButton.clicked.connect(self.goToTip)
+        # hide the button until the analysis is complete
         self.tipButton.setDisabled(True)
+        self.tipButton.setVisible(False)
 
         # Create and start a 20-second timer
         self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.goToTip)
         self.timer.start(20000)  # 20 seconds in milliseconds
 
         # start a 0 second timer to start climbing analysis, connect the signal from the climbanalyser to update the metrics
         self.startTimer = QTimer(self)
+        self.startTimer.setSingleShot(True)
         self.startTimer.timeout.connect(self.startClimbAnalysis)
-        self.startTimer.start(10000)
+        self.startTimer.start(4000)
 
     def startClimbAnalysis(self):
         self.climbAnalyser = ClimbAnalyserThread(self.climberName, self)
@@ -77,18 +82,36 @@ class ResultsScreen(QWidget):
 
     def goToTip(self):
         # TODO: Implement the goToTip method to display a climbing tip
+        self.timer.stop()
         print("Going to tip")
         pass
 
     @pyqtSlot()
     def updateMetrics(self):
+        """
+        Update the metrics with the results from the climb analysis, called when the climb analysis is complete
+        Makes the tip button visible and clickable
+        """
+
+        overallScoreStr = str(self.climbAnalyser.getClimbingScore())
+        
+        # if self.climbSuccessful:
+        #     message = f"\t Congratulations, {self.climberName}, you scored <span style='font-size: 34px; color: #FF66B2;'>{overallScoreStr}</span>! \nHere's why:"
+        # else:
+        #     message = f"\t Skill issue, {self.climberName}, you scored <span style='font-size: 34px; color: #FF66B2;'>{overallScoreStr}</span>! \nTake notes:"
 
         if self.climbSuccessful:
-            self.climbFinishedLabel.setText(f"Congratulations, {self.climberName}, here's how you did")
+            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+                        "Here's why:"
         else:
-            self.climbFinishedLabel.setText(f"Skill issue, {self.climberName}, here's an analysis of your lame attempt")
+            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+                        "Take notes:"
+
+
+        self.climbFinishedLabel.setText(message)
 
         self.tipButton.setDisabled(False)
+        self.tipButton.setVisible(True)
         
         pressureSubmetrics = self.climbAnalyser.getPressureSubmetrics()
         pressureVisualisation = self.climbAnalyser.getPressureVisualisation()
@@ -100,17 +123,17 @@ class ResultsScreen(QWidget):
         progressVisualisation = self.climbAnalyser.getProgressVisualisation()
 
         self.pressureWidget.updateImage(pressureVisualisation)
-        self.pressureWidget.updateScore(pressureSubmetrics[0])
+        self.pressureWidget.updateScore(pressureSubmetrics)
 
         self.progressWidget.updateImage(progressVisualisation)
-        self.progressWidget.updateScore(progressSubmetrics[0])
+        self.progressWidget.updateScore(progressSubmetrics)
 
         self.positioningWidget.updateImage(positioningVisualisation)
-        self.positioningWidget.updateScore(positioningSubmetrics[0])
+        self.positioningWidget.updateScore(positioningSubmetrics)
 
 
 class MetricWidget(QWidget):
-    def __init__(self, metric, image, colour, score=100, parent=None):
+    def __init__(self, metric: str, image, submetrics: list, colour: str = '#222222', score: int = 100, parent=None):
         super(MetricWidget, self).__init__(parent)
 
         # Set up the layout
@@ -118,8 +141,8 @@ class MetricWidget(QWidget):
         layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
         # Create the label and value widgets
-        labelLayout= QHBoxLayout()
-        labelLayout.setAlignment(Qt.AlignCenter)
+        self.labelLayout= QHBoxLayout()
+        self.labelLayout.setAlignment(Qt.AlignCenter)
         labelLogo = QLabel(self)
         labelLogo.setPixmap(QPixmap(f"UI/UIAssets/{metric}Icon.png").scaledToWidth(40, Qt.SmoothTransformation))
         # labelLogo.setPixmap(QPixmap(f"UI/UIAssets/logo.png").scaledToWidth(40, Qt.SmoothTransformation))
@@ -130,38 +153,48 @@ class MetricWidget(QWidget):
 
         self.scoreLabel = QLabel(str(score))
         self.scoreLabel.setFixedWidth(60)
-        self.scoreLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; text-align: right; font-weight: bold;")
+        self.scoreLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; font-weight: bold;")
+        self.scoreLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         
-        labelLayout.addWidget(labelLogo)
-        labelLayout.addSpacing(10)
-        labelLayout.addWidget(labelText)
-        labelLayout.addSpacing(10)
-        labelLayout.addWidget(self.scoreLabel)
+        self.labelLayout.addWidget(labelLogo)
+        self.labelLayout.addSpacing(10)
+        self.labelLayout.addWidget(labelText)
+        self.labelLayout.addSpacing(15)
+        self.labelLayout.addWidget(self.scoreLabel, alignment=Qt.AlignmentFlag.AlignRight)
 
-        layout.addSpacing(20)
-        layout.addLayout(labelLayout)
-        layout.addSpacing(20)
+        layout.addSpacing(5)
+        layout.addLayout(self.labelLayout)
+        layout.addSpacing(15)
 
         # add the image
         self.image = QLabel()
-        self.image.setStyleSheet("background-color: #ffffff; border-radius: 15%")
+        self.image.setStyleSheet("background-color: #ffffff; border-radius: 15px")
         # self.image.setPixmap(QPixmap(image).scaledToHeight(270, Qt.SmoothTransformation))
         self.image.setPixmap(QPixmap(image).scaledToWidth(300, Qt.SmoothTransformation))
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.image, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        layout.addSpacing(20)
+        layout.addSpacing(10)
 
+        self.submetricWidgetsList = []
+
+        # create a submetric widget for each submetric
+        for submetric in submetrics:
+            submetricWidget = MetricWidget.SubMetric(submetric, parent=self)
+            self.submetricWidgetsList.append(submetricWidget)
+            layout.addWidget(submetricWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addStretch(1)
         # Set the layout for the widget
         self.setLayout(layout)
-        self.setFixedSize(360, 450)
+        self.setFixedSize(365, 520)
 
         # Set the style for the widget - a rounded rectangle with a shadow
         metricWrapper = QWidget(self)
-        metricWrapper.setStyleSheet(f"border-radius: 15px; background-color: {colour}; ")
+        metricWrapper.setStyleSheet(f"border-radius: 20px; background-color: {colour}; ")
         metricWrapper.setLayout(self.layout())
         metricWrapper.setFixedWidth(self.width())
-        # metricWrapper.setFixedHeight(self.height())
+        metricWrapper.setFixedHeight(self.height())
 
 
         # Create shadow effect for metricWrapper
@@ -171,7 +204,6 @@ class MetricWidget(QWidget):
         shadowEffect.setOffset(0, 0)
 
         # metricWrapper.setGraphicsEffect(shadowEffect)
-        
         
     def updateImage(self, image):
         """
@@ -184,8 +216,40 @@ class MetricWidget(QWidget):
         imagePixmap = QPixmap.fromImage(QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888))
         self.image.setPixmap(imagePixmap.scaledToHeight(200, Qt.SmoothTransformation))
 
-    def updateScore(self, score):
-        self.scoreLabel.setText(str(score))
+    def updateScore(self, scoreList):
+        self.scoreLabel.setText(str(round(scoreList[0])))
+
+        for i in [0,len(self.submetricWidgetsList)-1]:
+            self.submetricWidgetsList[i].updateScore(scoreList[i+1])
+
+    
+
+    class SubMetric(QWidget):
+        def __init__(self, name, score = 100, parent=None):
+            super(QWidget, self).__init__(parent)
+
+            layout = QHBoxLayout(self)
+            layout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
+
+            nameLabel = QLabel(name, self)
+            nameLabel.setStyleSheet("font-size: 22px; color: #ffffff; font-family: 'DM Sans'; font-weight: bold;")
+            nameLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            nameLabel.setFixedWidth(180)
+
+            self.scoreLabel = QLabel(str(score), self)
+            self.scoreLabel.setFixedWidth(60)
+            self.scoreLabel.setStyleSheet("font-size: 22px; color: #ffffff; font-family: 'DM Sans'; font-weight: bold;")
+            self.scoreLabel.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+            layout.addWidget(nameLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            layout.addWidget(self.scoreLabel, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+            self.setLayout(layout)
+            self.setFixedWidth(240)
+            self.setFixedHeight(50)
+
+        def updateScore(self, score):
+            self.scoreLabel.setText(str(round(score)))
 
 
 if __name__ == "__main__":
@@ -210,9 +274,9 @@ if __name__ == "__main__":
     window.setWindowTitle("Climbing Rocks")
     window.setFixedSize(1280, 800)
     window.setFont(QFont("DM Sans"))
-    window.setStyleSheet("background-color: #333333; font-size: 20px; color: #ffffff;")
+    window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
     
-    window.resultsScreen = ResultsScreen("Danica", False, window)
+    window.resultsScreen = ResultsScreen("Danica", True, window)
     window.setCentralWidget(window.resultsScreen)    
 
     
