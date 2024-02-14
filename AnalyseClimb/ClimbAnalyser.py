@@ -38,6 +38,7 @@ class ClimbAnalyserThread(QThread):
         climbDataDirectory = os.path.join(dataDirectory, "output.csv")   
         holdsCoordinatesDirectory = os.path.join(dataDirectory, "holdCoordinates.csv")
         forceDataDirectory = os.path.join(dataDirectory, "forceData.csv")
+        self.leaderBoardDirectory = os.path.join(dataDirectory, 'leaderboard.csv')
 
         climbData = []
         holdsCoordinates = []
@@ -111,3 +112,31 @@ class ClimbAnalyserThread(QThread):
                         ClimbAnalyserThread.metricsWeights["progress"] * self.progressSubmetrics[0]
        
         return round(overallScore)
+    
+    def saveClimbRecord(self):
+        """
+        saves the climb record to a the database
+        climb record includes the date-time, climber name, climbing score, metrics and submetrics scores
+
+        work in progress
+        """
+        leaderBoard = pd.read_csv(self.leaderBoardDirectory)
+        leaderBoard = pd.DataFrame(leaderBoard)
+
+        if len(leaderBoard) == 0:
+            columnsList = ["DateTime", "Climber", "Score"]
+            for metric in ClimbAnalyserThread.metricsWeights.keys():
+                columnsList.append(metric)
+                for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
+                    columnsList.append(submetric)
+            leaderBoard = pd.DataFrame(columns=columnsList)
+
+        newRecord = []
+        for metric in ClimbAnalyserThread.metricsWeights.keys():
+            newRecord[metric] = self.metricsWeights[metric] * self.pressureSubmetrics[0] + \
+                                self.metricsWeights[metric] * self.positionSubmetrics[0] + \
+                                self.metricsWeights[metric] * self.progressSubmetrics[0]
+            for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
+                newRecord[submetric] = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.pressureSubmetrics[0] + \
+                                        self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.positionSubmetrics[0] + \
+                                        self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.progressSubmetrics[0]

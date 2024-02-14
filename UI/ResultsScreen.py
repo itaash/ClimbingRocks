@@ -1,11 +1,12 @@
-from PyQt5.QtCore import pyqtSlot, QTimer, Qt
+from PyQt5.QtCore import pyqtSlot, QTimer, Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPixmap, QImage, QColor
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsDropShadowEffect
 
 
 class ResultsScreen(QWidget):
+    timeoutSignal = pyqtSignal()
     def __init__(self, climberName, climbSuccessful, parent=None):
-        super(ResultsScreen, self).__init__(parent)
+        super().__init__(parent)
 
         # Set up the layout
         self.mainLayout = QVBoxLayout(self)
@@ -18,8 +19,8 @@ class ResultsScreen(QWidget):
         #intro text
         self.climbFinishedLabel = QLabel()
         self.climbFinishedLabel.setIndent(180)
-        self.climbFinishedLabel.setStyleSheet("font-size: 30px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; padding: 10px; border-radius: 10px;")
-        self.climbFinishedLabel.setText(f"Climb finished, {climberName}, we're analysing your climb now...\n\n")
+        self.climbFinishedLabel.setStyleSheet("font-size: 32px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; border-radius: 10px;")
+        self.climbFinishedLabel.setText(f"Hold on tight, {climberName}. \n\nWe're analysing your climb now...")
 
 
         # Add the logo to the top left corner
@@ -55,19 +56,24 @@ class ResultsScreen(QWidget):
 
         # Create the "Click to see Climbing tip" button
         self.tipButton = QPushButton("Click to see \nClimbing tip", self)
-        self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px; border-radius: 20px;")
+        self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #8f8f8f; border: none; padding: 10px; border-radius: 20px;")
         self.tipButton.setFixedSize(220, 100)
         self.tipButton.move(parent.width() - self.tipButton.width() - 50, 50)
         self.tipButton.clicked.connect(self.goToTip)
         # hide the button until the analysis is complete
         self.tipButton.setDisabled(True)
-        self.tipButton.setVisible(False)
+        # self.tipButton.setVisible(False)
 
-        # Create and start a 20-second timer
+        # Create and start a 20-second timer to display the tip
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.goToTip)
         self.timer.start(20000)  # 20 seconds in milliseconds
+
+        # create a 10 second timer to emit the signal to exit the results screen, starts once the tip is displayed
+        self.exitTimer = QTimer(self)
+        self.exitTimer.setSingleShot(True)
+        self.exitTimer.timeout.connect(self.handleExitTimer)
 
         # start a 0 second timer to start climbing analysis, connect the signal from the climbanalyser to update the metrics
         self.startTimer = QTimer(self)
@@ -84,7 +90,13 @@ class ResultsScreen(QWidget):
         # TODO: Implement the goToTip method to display a climbing tip
         self.timer.stop()
         print("Going to tip")
+
+        
         pass
+
+    @pyqtSlot()
+    def handleExitTimer(self):
+        self.timeoutSignal.emit()
 
     @pyqtSlot()
     def updateMetrics(self):
@@ -110,8 +122,9 @@ class ResultsScreen(QWidget):
 
         self.climbFinishedLabel.setText(message)
 
+        self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px; border-radius: 20px;")
         self.tipButton.setDisabled(False)
-        self.tipButton.setVisible(True)
+        # self.tipButton.setVisible(True)
         
         pressureSubmetrics = self.climbAnalyser.getPressureSubmetrics()
         pressureVisualisation = self.climbAnalyser.getPressureVisualisation()
@@ -276,8 +289,8 @@ if __name__ == "__main__":
     window.setFont(QFont("DM Sans"))
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
     
-    window.resultsScreen = ResultsScreen("Danica", True, window)
-    window.setCentralWidget(window.resultsScreen)    
+    window.resultsScreen = ResultsScreen("Alex", False, window)
+    window.setCentralWidget(window.resultsScreen)
 
     
     window.show()

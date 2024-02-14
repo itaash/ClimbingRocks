@@ -7,9 +7,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QStacked
 import math
 import time
 
-from UI.ClimbingScreen import ClimbingScreen
-
-FRAME_SKIP = 4
+FRAME_SKIP = 14
 
 class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
@@ -276,6 +274,10 @@ class PoseEstimatorThread(QThread):
                 centerOfGravity = self.calculateCenterOfGravity()
                 armAngles = self.calculateArmAngles()
                 self.inferenceSignal.emit(self.keypoints, centerOfGravity, armAngles)
+                print("left wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']], \
+                    "\nright wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']], \
+                    "\nleft ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']], \
+                    "\nright ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']])
                 self.recordClimb(frame)
 
 

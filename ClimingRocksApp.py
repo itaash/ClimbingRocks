@@ -135,13 +135,19 @@ class MainWindow(QMainWindow):
     @pyqtSlot(bool)
     def onClimbFinished(self, climbSuccessful):
         self.climbFinished = True
-        self.resultsScreen = ResultsScreen(self, self.currentClimber, climbSuccessful)
+        self.resultsScreen = ResultsScreen(self.currentClimber, climbSuccessful, self)
+        self.resultsScreen.timeoutSignal.connect(self.goToLobbyScreen)
         self.climbingScreen.setParent(None)
         self.setCentralWidget(self.resultsScreen)
         pass
         
     def onHoldsFound(self):
         self.goToClimbingScreen()
+        pass
+
+    def goToLobbyScreen(self):
+        self.resultsScreen.setParent(None)
+        self.setCentralWidget(self.lobbyScreen)
         pass
 
 

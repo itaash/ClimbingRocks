@@ -45,6 +45,8 @@ class ClimbingScreen(QWidget):
             self.poseEstimatorModelLoaded = False
             self.poseEstimator.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
         self.poseEstimator.inferenceSignal.connect(self.onInferenceSignal)
+        self.poseEstimator.climbInProgressSignal.connect(self.onClimbInProgressSignal)
+        self.poseEstimator.climbFinishedSignal.connect(self.onClimbFinishedSignal)
 
         self.keypoints = None
         self.centerOfGravity = (None, None)
@@ -85,6 +87,21 @@ class ClimbingScreen(QWidget):
         self.armAngles = armAngles        
         pass
 
+    @pyqtSlot(bool)
+    def onClimbInProgressSignal(self, inProgress):
+        if inProgress:
+            pass
+        else:
+            pass
+        pass
+
+    @pyqtSlot(bool)
+    def onClimbFinishedSignal(self, climbSuccessful):
+        if climbSuccessful:
+            pass
+        else:
+            pass
+        pass
 
     def drawSkeleton(self, frame, keypoints, centerOfGravity, threshold=0.3) -> np.ndarray:
         """
@@ -135,11 +152,10 @@ class ClimbingScreen(QWidget):
         return frame
 
 
-
-@pyqtSlot()
-def onPoseEstimatorModelLoaded():
-    window.poseEstimatorModelLoaded = True
-    print("Model loaded from Main Window")
+    @pyqtSlot()
+    def onPoseEstimatorModelLoaded():
+        window.poseEstimatorModelLoaded = True
+        print("Model loaded from Main Window")
 
 if __name__ == '__main__':
     import sys
@@ -170,7 +186,6 @@ if __name__ == '__main__':
 
     window.poseEstimatorModelLoaded = False
     window.poseEstimator = PoseEstimatorThread(window)
-    window.poseEstimator.modelLoaded.connect(onPoseEstimatorModelLoaded)
 
     window.poseEstimator.start()
 

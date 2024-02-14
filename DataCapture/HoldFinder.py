@@ -93,6 +93,7 @@ class MainWindow(QWidget):
                 imageNp = self.loadImageIntoNumpyArray(imagePath)
                 imageNp = cv2.cvtColor(imageNp, cv2.COLOR_BGR2RGB)
                 detections = self.holdFindingThread.runInference(imageNp)
+                
                 if detections is not None:
                     self.showImage(imagePath, detections)
             else:
@@ -103,17 +104,17 @@ class MainWindow(QWidget):
 
     def showImage(self, imagePath, detections, threshold=0.3):
         imageNpWithDetections = cv2.imread(imagePath)
-        viz_utils.visualizeBoxesAndLabelsOnImageArray(
+        viz_utils.visualize_boxes_and_labels_on_image_array(
             imageNpWithDetections,
-            detections['detectionBoxes'],
-            detections['detectionClasses'],
-            detections['detectionScores'],
-            label_map_util.createCategoryIndexFromLabelmap(
-                'models/HoldModel/hold-detection_label_map.pbtxt', useDisplayName=True),
-            useNormalizedCoordinates=True,
-            maxBoxesToDraw=200,
-            minScoreThresh=threshold,
-            agnosticMode=False)
+            detections['detection_boxes'],
+            detections['detection_classes'],
+            detections['detection_scores'],
+            label_map_util.create_categories_from_labelmap(
+                'models/HoldModel/hold-detection_label_map.pbtxt', use_display_name=True),
+            use_normalized_coordinates=True,
+            max_boxes_to_draw=20,
+            min_score_thresh=threshold,
+            agnostic_mode=False)
 
         # Convert image to QImage
         height, width, channel = imageNpWithDetections.shape
@@ -129,8 +130,12 @@ class MainWindow(QWidget):
         # show the image by displaying the window
         self.show()
 
-        # Wait for a 4 seconds before loading the next image
-        QTimer.singleShot(4000, self.loadNextImage)
+        # Wait for any key press to load the next image
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        
+        self.loadNextImage()
 
     def loadImageIntoNumpyArray(self, path):
         return np.array(Image.open(path))
