@@ -162,13 +162,13 @@ def calculate_hesitation_score(results_left, results_right):
 
 
 def calculate_time_score(timeclimb):
-    #score
-    return 0
+    timeclimb = 100
+    return timeclimb
 
 
 # Function to calculate combined score by averaging climbing duration score and hesitation score
 def calculate_combined_score(climbing_duration_score, hesitation_score, hold_score):
-    return (climbing_duration_score + hesitation_score + hold_score) / 3
+    return (climbing_duration_score*0.3 + hesitation_score*0.3 + hold_score*0.4) 
     
 
 def calculateProgress(climbData, holdsCoordinates):
@@ -183,8 +183,8 @@ def calculateProgress(climbData, holdsCoordinates):
     climbing_duration_score = calculate_time_score(timeclimb)
 
     combined_score = calculate_combined_score(climbing_duration_score, hesitation_score, hold_score)
-
-    return [combined_score, climbing_duration_score, hesitation_score, hold_score]
+    print(combined_score, hold_score, climbing_duration_score, hesitation_score )
+    return [round(combined_score), round(hold_score), round(climbing_duration_score), round(hesitation_score)]
 
 def sum_left_right(result_left, result_right, holdsCoordinates):
 
