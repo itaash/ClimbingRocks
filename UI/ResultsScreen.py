@@ -264,6 +264,51 @@ class MetricWidget(QWidget):
         def updateScore(self, score):
             self.scoreLabel.setText(str(round(score)))
 
+"""
+class TipDialog(QDialog):
+    
+    Dialog to display the climbing tip associated with the results of the climb analysis
+    Opens when the tip button is clicked or when the timer runs out
+    Contains a label with the tip and a close button. Closes when the close button is clicked or the escape key is pressed or if the dialog loses focus or a timer runs out.
+    
+    def __init__(self, tip, parent=None):
+        super().__init__(parent)
+
+        self.layout = QVBoxLayout(self)
+        self.layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+
+        self.tipLabel = QLabel(tip, self)
+        self.tipLabel.setStyleSheet("font-size: 24px; color: #ffffff; font-family: 'DM Sans'; background-color: #222222; border-radius: 20px; padding: 10px;")
+        self.tipLabel.setFixedWidth(500)
+        self.tipLabel.setWordWrap(True)
+
+        self.layout.addWidget(self.tipLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(self.layout)
+
+        self.setFixedSize(600, 300)
+
+    def closeEvent(self, event):
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+
+    def focusOutEvent(self, event):
+        self.close()
+
+    def showEvent(self, event):
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.close)
+        self.timer.start(10000)  # 10 seconds in milliseconds
+
+    def close(self):
+        self.timer.stop()
+        super().close()
+"""
+
 
 if __name__ == "__main__":
     import sys, os

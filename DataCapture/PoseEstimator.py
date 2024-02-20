@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QStacked
 import math
 import time
 
-FRAME_SKIP = 14
+FRAME_SKIP = 5
 
 class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
@@ -31,7 +31,7 @@ class PoseEstimatorThread(QThread):
 
     def __init__(self, parent):
         super(PoseEstimatorThread, self).__init__(parent)
-        self.modelPath = "models/movenet_lightning_f16.tflite"
+        self.modelPath = "models/movenet_thunder_f16.tflite"
         self.holdCoordinatePath = "data/holdCoordinates.csv"
         self.interpreter = None
         self.inputDetails = None
@@ -40,7 +40,7 @@ class PoseEstimatorThread(QThread):
         self.parent = parent
         self.climbInProgress = False # True if the climber has been in a valid position for at least 1 second
         self.climbBegun = False #True if the climber is in a valid position, but has not been in a valid position for at least 1 second
-        self.climbSuccessful = False # True if both hands have been on or above the highest hold
+        self.climbSuccessful = None # True if both hands have been on or above the highest hold
         self.holdCoordinates = []
         self.holdCoordinatesLoaded = False
 
@@ -92,6 +92,9 @@ class PoseEstimatorThread(QThread):
         self.lowestHoldY = holdCoordinates[1][4]    
         self.highestHoldY = holdCoordinates[-1][4]
 
+        print("Lowest hold: ", self.lowestHoldY)
+        print("Highest hold: ", self.highestHoldY)
+
         return
 
     def recordClimb(self, frame):
@@ -116,13 +119,13 @@ class PoseEstimatorThread(QThread):
             return
 
         # Check if all limbs are above the lowest hold
-        if self.isClimberInValidPosition():         # Climber is in a valid position, start recording the climb
+        if self.isClimberInValidPosition() and not self.climbSuccessful:         # Climber is in a valid position, start recording the climb
             if not self.climbBegun and not self.climbInProgress: # Climber was not in a valid position before, and is not in a valid position now
                 # Start a timer to check if the climber is still in a valid position after 1 second
                 self.climbBegun = True
                 self.startTime = time.time() * 1000 # in milliseconds
                 timer = QTimer()
-                timer.singleShot(1000, lambda: self.validateClimb())
+                timer.singleShot(2000, lambda: self.validateClimb())
                 print ("Climb begun.")
 
             # Store keypoints and timestamp
@@ -137,9 +140,13 @@ class PoseEstimatorThread(QThread):
                                  round(self.keypoints[usefulKeypoint][1], 5)])
             self.keypointsData.append(frameRow)
             # Check if both hands have been on or above the highest hold
-            if self.leftHand[1] < self.highestHoldY and self.rightHand[1] < self.highestHoldY:
+            if (self.leftHand[0] < (self.highestHoldY+0.05)) and (self.rightHand[0] < (self.highestHoldY+0.05)):
                 self.climbSuccessful = True # Climber has reached the top
                 self.climbInProgress = False
+                self.climbInProgressSignal.emit(self.climbInProgress)
+                self.saveKeypointsData()
+                self.climbFinishedSignal.emit(self.climbSuccessful)
+                print("Climb successful!")
 
 
         elif self.climbInProgress and self.climbBegun: # Climber was in a valid position before, but is not in a valid position now
@@ -173,13 +180,15 @@ class PoseEstimatorThread(QThread):
             print("Climb in progress!")
         else:
             self.climbInProgress = False
+            self.climbBegun = False
             # may not be necessary to emit this signal 
             # self.climbInProgressSignal.emit(False)
             self.keypointsData = []
             print("Climb reset.")
 
         # print positions of 4 limbs and lowest hold for debugging
-        print(f"Left hand: {self.leftHand[0]}, {self.leftHand[1]}\n Right hand: {self.rightHand[0]}, {self.rightHand[1]}\n Left foot: {self.leftFoot[0]}, {self.leftFoot[1]}\n Right foot: {self.rightFoot[0]}, {self.rightFoot[1]}\n Lowest hold: {self.lowestHoldY}")
+        print(f"Left hand: {self.leftHand[0]}, {self.leftHand[1]}")
+        # \n Right hand: {self.rightHand[0]}, {self.rightHand[1]}\n Left foot: {self.leftFoot[0]}, {self.leftFoot[1]}\n Right foot: {self.rightFoot[0]}, {self.rightFoot[1]}\n Lowest hold: {self.lowestHoldY}")
 
         
     def isClimberInValidPosition(self, buffer=0.05):
@@ -274,10 +283,10 @@ class PoseEstimatorThread(QThread):
                 centerOfGravity = self.calculateCenterOfGravity()
                 armAngles = self.calculateArmAngles()
                 self.inferenceSignal.emit(self.keypoints, centerOfGravity, armAngles)
-                print("left wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']], \
-                    "\nright wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']], \
-                    "\nleft ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']], \
-                    "\nright ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']])
+                # print("left wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']], \
+                #     "\nright wrist: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']], \
+                #     "\nleft ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']], \
+                #     "\nright ankle: ", self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']])
                 self.recordClimb(frame)
 
 

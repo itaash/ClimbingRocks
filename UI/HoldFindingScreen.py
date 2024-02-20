@@ -176,7 +176,7 @@ class HoldFindingScreen(QWidget):
         self.findHoldsTimer = QTimer(self)
         self.findHoldsTimer.setSingleShot(True)
         self.findHoldsTimer.timeout.connect(self.findHolds)
-        self.findHoldsTimer.start(3000)
+        self.findHoldsTimer.start(2500)
 
     @pyqtSlot()
     def findHolds(self):
@@ -219,7 +219,7 @@ class HoldFindingScreen(QWidget):
 
             # investigate why this doesn't work
             filteredDetectionswithHolds = self.filterResultsforHolds(self.detections, threshold)
-            filteredDetectionswithHoldsInCenterHalf = self.filterResultsforCenterHalf(filteredDetectionswithHolds)
+            filteredDetectionswithHoldsInCenterHalf = self.filterResultsforCenterHalf(filteredDetectionswithHolds, leftBound=0.25, rightBound=0.75)
             sortedDetections = self.sortDetectionsbyScore(filteredDetectionswithHoldsInCenterHalf)
 
 
@@ -306,7 +306,7 @@ class HoldFindingScreen(QWidget):
             filteredResults: The filtered results of the hold finding model that only include holds in the center half of the frame
         """
 
-        mask = (np.array(output['detection_boxes'])[:, 0] >= leftBound) & (np.array(output['detection_boxes'])[:, 0] <= rightBound)
+        mask = (np.array(output['detection_boxes'])[:, 1] >= leftBound) & (np.array(output['detection_boxes'])[:, 1] <= rightBound)
 
         filteredResults = {
             'detection_anchor_indices': np.array(output['detection_anchor_indices'])[mask],
@@ -354,7 +354,7 @@ class HoldFindingScreen(QWidget):
             max_boxes_to_draw=20,
             min_score_thresh=threshold,
             agnostic_mode=False,
-            skip_scores=True)
+            skip_scores=False)
 
         # Convert image to QImage
         height, width, channel = frame.shape
