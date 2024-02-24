@@ -2,18 +2,11 @@ import os
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from AnalyseClimb import Pressure, Positioning, Progress
-import pandas as pd
+import pandas as pd, numpy as np, json, random
 
 
 class ClimbAnalyserThread(QThread):
     ClimbAnalysisComplete = pyqtSignal()  # Signal to indicate that analysis is complete
-
-    climbingTipsDict = {"arm-bend": "Try to keep your arms straighter",
-                        "hip-distance": "Try to keep your hips closer to the wall",
-                        "speed": "Try to climb faster",
-                        "grip-strength": "Try to improve your grip strength",
-                        "hesitation": "Try to be deliberate in your movements"
-    }
 
     metricsWeights = {"pressure": 0.3, "positioning": 0.4, "progress": 0.3}
 
@@ -39,6 +32,7 @@ class ClimbAnalyserThread(QThread):
         holdsCoordinatesDirectory = os.path.join(dataDirectory, "holdCoordinates.csv")
         forceDataDirectory = os.path.join(dataDirectory, "forceData.csv")
         self.leaderBoardDirectory = os.path.join(dataDirectory, 'leaderboard.csv')
+        self.climbingTipsDirectory = os.path.join(dataDirectory, 'climbingTips.json')
 
         climbData = []
         holdsCoordinates = []
@@ -73,6 +67,9 @@ class ClimbAnalyserThread(QThread):
         self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates)
         self.progressVisualisation = Progress.visualiseProgress(climbData, holdsCoordinates)
 
+        # calculte the lowest weighted submetric and get a climbing tip based on that submetric
+        self.lowestWeightedSubmetric = self.getLowestWeightedSubmetric()
+        self.climbingTip = self.findClimbingTip(self.lowestWeightedSubmetric)
 
         # Emit signal to parent to indicate that analysis is complete
         self.ClimbAnalysisComplete.emit()
@@ -96,12 +93,62 @@ class ClimbAnalyserThread(QThread):
         return self.progressVisualisation
     
     def getClimbingTip(self):
+        if self.climbingTip == "":
+            return "I'm sorry, but as an AI language model, I don't have personal opinions or feelings; I can only provide information based on patterns"\
+                    " in the data I was trained on. Your climb was so bad that I can't even provide a tip for you. You should probably consider a different hobby. "\
+                    "Just kidding, something probably went wrong. Please ask the creators for help."
+        return self.climbingTip
+    
+    def findClimbingTip(self, submetric) -> str:
         """
-        finds the weakest submetric and returns a tip to improve it
-        weakes submetric is the one with the lowest weighted score
+        returns a climbing tip based on the submetric passed as an argument
+        if more than one tip is available for the submetric, a random tip corresponding to the submetric is returned
+
+        args:
+        submetric: str
+
+        returns:
+        climbingTip: str
         """
-        # TODO: implement this
-        pass
+        try:
+            climbingTips = json.load(open(self.climbingTipsDirectory))
+
+            climbingTipsforSubmetric = list(climbingTips[submetric].values())
+
+            climbingTip = random.choice(climbingTipsforSubmetric)
+        except:
+            climbingTip = ""
+
+        return climbingTip
+
+    def getLowestWeightedSubmetric(self) -> str:
+        """
+        returns the submetric with the lowest weighted score
+
+        returns:
+        minSubmetric: str
+        """
+        minSubmetric = ""
+        minScore = 100
+        
+        for metric in ClimbAnalyserThread.metricsWeights.keys():
+            for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
+                if metric == "progress":
+                    metricScoreList = self.progressSubmetrics
+                elif metric == "positioning":
+                    metricScoreList = self.positionSubmetrics
+                elif metric == "pressure":
+                    metricScoreList = self.pressureSubmetrics
+                else:
+                        raise ValueError("Invalid metric name")
+                
+                weightedSubmetricScore = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)]*metricScoreList[ClimbAnalyserThread.submetricsLabels[metric].index(submetric)+1]
+                if weightedSubmetricScore < minScore:
+                    minScore = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)]
+                    minSubmetric = submetric
+        print(minSubmetric)
+        print(minScore)
+        return minSubmetric
 
     def getClimbingScore(self):
         """

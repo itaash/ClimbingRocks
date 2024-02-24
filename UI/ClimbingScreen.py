@@ -34,6 +34,20 @@ class ClimbingScreen(QWidget):
         self.logoLabel.setFixedSize(160, 160)
         self.logoLabel.move(35, 14)
 
+        # Create status label
+        self.statusLabel = QLabel(self)
+        self.statusLabel.setFixedSize((parent.width()*2)//5, parent.height()//6)
+        # statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
+        # self.statusLabel.setPixmap(statusPixmap)
+        self.statusLabel.setAlignment(Qt.AlignCenter)
+        self.statusLabel.setStyleSheet(" background-color: 'transparent';"
+                                        "font-size: 20px;"
+                                        "color: #ffffff;"
+                                        "border-radius: 45px;"
+                                        "border: 10px solid #222222;")
+        self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+                                    self.parent.height() - self.statusLabel.height() - 40)
+
         # Connect signals
         self.cameraSender = parent.cameraSender
         self.cameraSender.frameSignal.connect(self.onFrameSignal)
@@ -90,7 +104,16 @@ class ClimbingScreen(QWidget):
     @pyqtSlot(bool)
     def onClimbInProgressSignal(self, inProgress):
         if inProgress:
-            pass
+            self.statusLabel.setText("Climb in progress")
+            self.statusLabel.setStyleSheet(
+                "background-color: #c58af9;"  # purple background
+                "color: #ffffff;"
+                "border-radius: 35px;"
+                "border: 10px solid #962af4;"   # darker purple border
+                "font-size: 40px;"
+                "font-family: 'Bungee';"
+                "font-weight: bold;"
+            )
         else:
             pass
         pass
@@ -152,10 +175,10 @@ class ClimbingScreen(QWidget):
         return frame
 
 
-    @pyqtSlot()
-    def onPoseEstimatorModelLoaded():
-        window.poseEstimatorModelLoaded = True
-        print("Model loaded from Main Window")
+@pyqtSlot()
+def onPoseEstimatorModelLoaded():
+    window.poseEstimatorModelLoaded = True
+    print("Model loaded from Main Window")
 
 if __name__ == '__main__':
     import sys
