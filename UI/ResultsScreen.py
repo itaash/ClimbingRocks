@@ -267,7 +267,8 @@ class MetricWidget(QWidget):
             image (numpy array): the image to be displayed
         """
         #decode the image
-        imagePixmap = QPixmap.fromImage(QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888))
+        imagePixmap = QPixmap(image)
+        #imagePixmap = QPixmap.fromImage(QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888))
         self.image.setPixmap(imagePixmap.scaledToHeight(200, Qt.SmoothTransformation))
 
     def updateScore(self, scoreList):

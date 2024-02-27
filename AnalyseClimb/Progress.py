@@ -219,7 +219,8 @@ def visualiseProgress(climbData, holdsCoordinates):
 
     # Convert the image to numpy array
     img2 = np.array(canvas.renderer.buffer_rgba())
-    img = np.zeros((200, 200, 3), dtype=np.uint8)
+    img1 = np.zeros((200, 200, 3), dtype=np.uint8)
+    img = "C:\\Users\\danic\\OneDrive\\Documents\\GitHub\\ClimbingRocks\\UI\\UIAssets\\progress_placeholder.png"
     plt.close()  # Close the figure to free up resources
 
     return img
