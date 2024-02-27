@@ -17,9 +17,9 @@ class CameraSender(QThread):
         super().__init__(parent=None)
         self.frame = None
         # self.publisher = client
-        # try:
-        #     self.cap = cv2.VideoCapture(1)
-        # except:
+        #try:
+        #    self.cap = cv2.VideoCapture(1)
+        #except:
         self.cap = cv2.VideoCapture(0)
         self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         self.cameraConnected = self.cap.isOpened()
