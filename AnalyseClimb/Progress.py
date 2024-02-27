@@ -218,8 +218,8 @@ def visualiseProgress(climbData, holdsCoordinates):
 
 
     # Convert the image to numpy array
-    img = np.array(canvas.renderer.buffer_rgba())
-
+    img2 = np.array(canvas.renderer.buffer_rgba())
+    img = np.zeros((200, 200, 3), dtype=np.uint8)
     plt.close()  # Close the figure to free up resources
 
     return img
