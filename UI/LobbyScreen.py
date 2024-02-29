@@ -19,7 +19,7 @@ class LeaderboardWidget(QWidget):
 
         # Create rounded rectangle background
         background = QLabel(self)
-        background.setStyleSheet("background-color: #222222; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; opacity: 75;")
+        background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {self.height() // 2}px; border-bottom-right-radius: {self.height()//2}px; opacity: 75;")
         background.setFixedSize(self.width(), self.height())
 
         # Create labels for position, name, and score
@@ -33,7 +33,8 @@ class LeaderboardWidget(QWidget):
 
         scoreLabel = QLabel(str(score), self)
         scoreLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-        scoreLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 20px;")
+        scoreLabel.setStyleSheet(f"background-color: '#dddddd'; color: #222222; font-weight: 500; line-height: 20px; border-radius: {scoreLabel.height()//2};")
+        scoreLabel.setFixedWidth(55)
 
         # Create the layout for the widget
         layout = QHBoxLayout(self)
@@ -87,14 +88,15 @@ class LobbyScreen(QWidget):
         # Customize the scroll bar style
         scroll_bar_style = """
             QScrollBar:vertical {
-                background: #c58af9;  /* Scroll background */
+                background: transparent;  /* Scroll bar background color */
                 border-radius: 6 px;
-                width: 12px;
-            }
+                width: 12px;  /* Width of the scroll bar */
+                margin: 0px 0px 0px 0px;    
+                }
 
             QScrollBar::handle:vertical {
                 background: #222222;  /* Scroll pill color */
-                min-height: 15px;  /* Height of the scroll pill */
+                min-height: 2px;  /* Height of the scroll pill */
                 border-radius: 6px;
             }
 

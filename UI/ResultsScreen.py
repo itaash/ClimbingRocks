@@ -194,6 +194,9 @@ class MetricWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
+        darkerColour = QColor(colour).darker(150)
+        darkerColourHex = darkerColour.name()
+
         # Create the label and value widgets
         self.labelLayout= QHBoxLayout()
         self.labelLayout.setAlignment(Qt.AlignCenter)
@@ -216,8 +219,12 @@ class MetricWidget(QWidget):
         self.labelLayout.addSpacing(15)
         self.labelLayout.addWidget(self.scoreLabel, alignment=Qt.AlignmentFlag.AlignRight)
 
+        labelLayoutWrapper = QWidget(self)
+        labelLayoutWrapper.setLayout(self.labelLayout)
+        labelLayoutWrapper.setStyleSheet(f"background-color: {colour}; border-radius: {labelLayoutWrapper.height()}px;")
+
         layout.addSpacing(5)
-        layout.addLayout(self.labelLayout)
+        layout.addWidget(labelLayoutWrapper, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addSpacing(15)
 
         # add the image
@@ -245,7 +252,7 @@ class MetricWidget(QWidget):
 
         # Set the style for the widget - a rounded rectangle with a shadow
         metricWrapper = QWidget(self)
-        metricWrapper.setStyleSheet(f"border-radius: 20px; background-color: {colour}; ")
+        metricWrapper.setStyleSheet(f"border-radius: {labelLayoutWrapper.height()}px; background-color: {colour}; ")
         metricWrapper.setLayout(self.layout())
         metricWrapper.setFixedWidth(self.width())
         metricWrapper.setFixedHeight(self.height())

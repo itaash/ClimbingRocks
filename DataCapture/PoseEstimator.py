@@ -48,10 +48,10 @@ class PoseEstimatorThread(QThread):
         self.cameraSender = parent.cameraSender
         self.cameraSender.cameraConnectSignal.connect(self.oncameraConnectSignal)
         self.cameraSender.frameSignal.connect(self.onFrameSignal)
-        try:
-            self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
-        except:
-            pass
+        # try:
+        self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
+        # except:
+        #     pass
 
         self.poseEstimatorModelLoaded = False
 

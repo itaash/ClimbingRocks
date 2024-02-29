@@ -95,18 +95,19 @@ class MainWindow(QMainWindow):
         self.holdFindingScreen.setParent(None)
         self.setCentralWidget(self.climbingScreen)
         self.climbingScreen.cameraSender.frameSignal.connect(self.climbingScreen.onFrameSignal)
-        self.climbingScreen.poseEstimator.climbFinishedSignal.connect(self.onClimbFinished)
+        self.climbingScreen.poseEstimatorThread.inferenceSignal.connect(self.climbingScreen.onInferenceSignal)
+        self.poseEstimatorThread.climbFinishedSignal.connect(self.onClimbFinished)
 
 
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
         self.holdFindingModelLoaded = True
-        self.poseEstimator = PoseEstimatorThread(self)
-        self.poseEstimator.modelLoaded.connect(self.onPoseEstimatorLoaded)
-        self.poseEstimator.start()
+        self.poseEstimatorThread = PoseEstimatorThread(self)
+        self.poseEstimatorThread.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
+        self.poseEstimatorThread.start()
 
     @pyqtSlot()
-    def onPoseEstimatorLoaded(self):
+    def onPoseEstimatorModelLoaded(self):
         self.poseEstimatorModelLoaded = True
 
 

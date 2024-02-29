@@ -40,11 +40,16 @@ class ClimbingScreen(QWidget):
         # statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
         # self.statusLabel.setPixmap(statusPixmap)
         self.statusLabel.setAlignment(Qt.AlignCenter)
-        self.statusLabel.setStyleSheet(" background-color: 'transparent';"
-                                        "font-size: 20px;"
-                                        "color: #ffffff;"
-                                        "border-radius: 45px;"
-                                        "border: 10px solid #222222;")
+        self.statusLabel.setText("Start Climbing!")
+        self.statusLabel.setStyleSheet(
+                    "background-color: #63D451;"  # green background
+                    "color: #ffffff;"
+                    "border-radius: 45px;"
+                    "border: 10px solid #3FB42D;" # darker green border
+                    "font-size: 40px;"
+                    "font-family: 'Bungee';"
+                    "font-weight: bold;"
+                )
         self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
                                     self.parent.height() - self.statusLabel.height() - 40)
 
@@ -52,15 +57,15 @@ class ClimbingScreen(QWidget):
         self.cameraSender = parent.cameraSender
         self.cameraSender.frameSignal.connect(self.onFrameSignal)
 
-        self.poseEstimator = parent.poseEstimator
-        if parent.poseEstimatorModelLoaded:
+        self.poseEstimatorThread = parent.poseEstimatorThread
+        if self.poseEstimatorThread.modelLoaded:
             self.poseEstimatorModelLoaded = True
         else:
             self.poseEstimatorModelLoaded = False
-            self.poseEstimator.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
-        self.poseEstimator.inferenceSignal.connect(self.onInferenceSignal)
-        self.poseEstimator.climbInProgressSignal.connect(self.onClimbInProgressSignal)
-        self.poseEstimator.climbFinishedSignal.connect(self.onClimbFinishedSignal)
+            self.poseEstimatorThread.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
+        self.poseEstimatorThread.inferenceSignal.connect(self.onInferenceSignal)
+        self.poseEstimatorThread.climbInProgressSignal.connect(self.onClimbInProgressSignal)
+        self.poseEstimatorThread.climbFinishedSignal.connect(self.onClimbFinishedSignal)
 
         self.keypoints = None
         self.centerOfGravity = (None, None)
@@ -81,6 +86,8 @@ class ClimbingScreen(QWidget):
             return
         if self.poseEstimatorModelLoaded:
             frame = self.drawSkeleton(frame, self.keypoints, self.centerOfGravity)
+        else:
+            logging.info("Pose estimator model not loaded yet")
         # Convert image to QImage and display it in the QLabel
         frame = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_BGR888)
         # Convert the QImage to a QPixmap
@@ -95,7 +102,7 @@ class ClimbingScreen(QWidget):
 
     @pyqtSlot(np.ndarray, tuple, tuple)
     def onInferenceSignal(self, keypoints, centerOfGravity, armAngles):
-        # print("Inference signal received in ClimbingScreen")
+        print("Inference signal received in ClimbingScreen")
         self.keypoints = keypoints
         self.centerOfGravity = centerOfGravity
         self.armAngles = armAngles        
@@ -115,15 +122,42 @@ class ClimbingScreen(QWidget):
                 "font-weight: bold;"
             )
         else:
-            pass
+            self.statusLabel.setText("Start Climbing!")
+            self.statusLabel.setStyleSheet(
+                "background-color: #63D451;"  # green background
+                "color: #ffffff;"
+                "border-radius: 45px;"
+                "border: 10px solid #3FB42D;"  # darker green border
+                "font-size: 40px;"
+                "font-family: 'Bungee';"
+                "font-weight: bold;"
+            )
         pass
 
     @pyqtSlot(bool)
     def onClimbFinishedSignal(self, climbSuccessful):
         if climbSuccessful:
-            pass
+            self.statusLabel.setText("Climb Successful!")
+            self.statusLabel.setStyleSheet(
+                "background-color: #63D451;"  # green background
+                "color: #ffffff;"
+                "border-radius: 45px;"
+                "border: 10px solid #3FB42D;"  # darker green border
+                "font-size: 40px;"
+                "font-family: 'Bungee';"
+                "font-weight: bold;"
+            )
         else:
-            pass
+            self.statusLabel.setText("Climb Unsuccessful")
+            self.statusLabel.setStyleSheet(
+                "background-color: #ff0000;"  # red background
+                "color: #ffffff;"
+                "border-radius: 45px;"
+                "border: 10px solid #ff0000;"  # darker red border
+                "font-size: 40px;"
+                "font-family: 'Bungee';"
+                "font-weight: bold;"
+            )
         pass
 
     def drawSkeleton(self, frame, keypoints, centerOfGravity, threshold=0.3) -> np.ndarray:
@@ -140,6 +174,7 @@ class ClimbingScreen(QWidget):
         numpy.ndarray: The frame with the skeleton drawn on it.
         """
         if keypoints is None:
+            # print("No keypoints detected")
             return frame
         for keypoint in keypoints:
             x, y, score = keypoint[0], keypoint[1], keypoint[2]
