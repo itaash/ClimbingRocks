@@ -88,10 +88,10 @@ class LobbyScreen(QWidget):
         # Customize the scroll bar style
         scroll_bar_style = """
             QScrollBar:vertical {
-                background: transparent;  /* Scroll bar background color */
-                border-radius: 6 px;
+                background: solid;  /* Scroll bar background color */
+                border-radius: 6px;
                 width: 12px;  /* Width of the scroll bar */
-                margin: 0px 0px 0px 0px;    
+                padding: 8px 0px 8px 0px;    
                 }
 
             QScrollBar::handle:vertical {
@@ -122,7 +122,7 @@ class LobbyScreen(QWidget):
         shadow_effect.setBlurRadius(30)
         shadow_effect.setColor(QColor('#c58af9'))
         shadow_effect.setOffset(0, 0)
-
+        
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
@@ -141,7 +141,7 @@ class LobbyScreen(QWidget):
         # Right half: User input and start button
         inputLayout = QVBoxLayout()
         inputLayout.setAlignment(Qt.AlignTop)
-        inputLayout.addSpacing(140)
+        inputLayout.addSpacing(200)
         inputLabel = QLabel("ENTER NAME:")
         # inputLabel.setFixedWidth(400)
         inputLabel.setStyleSheet("font-size: 50px; font-weight: bold; font-family: 'Bungee';")
@@ -150,9 +150,12 @@ class LobbyScreen(QWidget):
         self.nameInput.setFixedWidth(400)
         self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 24px; font-weight: bold; border-radius: 10px; height: 40px; padding-left: 10px;")
         self.nameInput.setPlaceholderText("Nom nom nom")
+        self.nameInput.setMaxLength(13)
+        self.nameInput.setFixedHeight(50)
 
         self.startButton = StartButton(self.startClimbing, self)
         self.startButton.setDisabled(True)
+        self.startButton.setVisible(False)
         self.startButton.move(parent.width() - self.startButton.width() - 60, parent.height() - self.startButton.height() - 60)
 
         inputLayout.addWidget(inputLabel)
@@ -219,8 +222,10 @@ class LobbyScreen(QWidget):
             layout.addWidget(leaderboardWidget)
 
     def updateStartButton(self):
-        # Enable the start button only if there is text in the input field
-        self.startButton.setDisabled(self.nameInput.text() == "")
+        # Enable the start button only if there are at least 3 characters in the input field
+        self.startButton.setDisabled(self.nameInput.text() == "" and len(self.nameInput.text()) < 3)
+        self.startButton.setVisible(self.nameInput.text() != "" and len(self.nameInput.text()) >= 3)
+
 
     def startClimbing(self):
         # Get the user's name from the input field
