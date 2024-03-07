@@ -8,7 +8,7 @@ from PIL import Image
 from object_detection.utils import label_map_util, visualization_utils as viz_utils
 
 class HoldFindingThread(QThread):
-    modelLoaded = pyqtSignal()
+    holdFindingModelLoaded = pyqtSignal()
 
     def __init__(self, parent=None):
         super(HoldFindingThread, self).__init__(parent)
@@ -22,7 +22,7 @@ class HoldFindingThread(QThread):
         """
         self.detectFn = tf.saved_model.load(self.modelPath)
         print('Hold finding model loaded')
-        self.modelLoaded.emit()
+        self.holdFindingModelLoaded.emit()
 
     def runInference(self, frame):
         """
@@ -66,7 +66,7 @@ class MainWindow(QWidget):
         self.holdFindingThread = HoldFindingThread()
 
         # Connect the signals
-        self.holdFindingThread.modelLoaded.connect(self.onModelLoaded)
+        self.holdFindingThread.holdFindingModelLoaded.connect(self.onModelLoaded)
 
         # Start the thread
         self.holdFindingThread.start()

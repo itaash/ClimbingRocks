@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
 
             # Create hold finding thread
             self.holdFindingThread = HoldFindingThread(self)
-            self.holdFindingThread.modelLoaded.connect(self.onHoldFindingModelLoaded)
+            self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
             self.splashScreen.setProgress(30)
             self.holdFindingThread.start()
 

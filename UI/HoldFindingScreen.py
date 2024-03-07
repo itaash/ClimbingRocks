@@ -73,7 +73,7 @@ class HoldFindingScreen(QWidget):
         if parent.holdFindingModelLoaded:
             self.onHoldFindingModelLoaded()
         else:
-            self.holdFindingThread.modelLoaded.connect(self.onHoldFindingModelLoaded)
+            self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
 
         # flag to indicate if the holds have been found
         self.holdsFound = False

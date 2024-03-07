@@ -12,6 +12,7 @@ FRAME_SKIP = 5
 class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
     inferenceSignal = pyqtSignal(np.ndarray, tuple, tuple)
+    climbBegunSignal = pyqtSignal(bool)
     climbInProgressSignal = pyqtSignal(bool)
     climbFinishedSignal = pyqtSignal(bool)
     usefulKeypointDict = {
@@ -123,6 +124,7 @@ class PoseEstimatorThread(QThread):
             if not self.climbBegun and not self.climbInProgress: # Climber was not in a valid position before, and is not in a valid position now
                 # Start a timer to check if the climber is still in a valid position after 1 second
                 self.climbBegun = True
+                self.climbBegunSignal.emit(self.climbBegun)
                 self.startTime = time.time() * 1000 # in milliseconds
                 timer = QTimer()
                 timer.singleShot(2000, lambda: self.validateClimb())
@@ -181,6 +183,7 @@ class PoseEstimatorThread(QThread):
         else:
             self.climbInProgress = False
             self.climbBegun = False
+            self.climbBegunSignal.emit(self.climbBegun)
             # may not be necessary to emit this signal 
             # self.climbInProgressSignal.emit(False)
             self.keypointsData = []
@@ -271,6 +274,7 @@ class PoseEstimatorThread(QThread):
         #     return
         # if hold coordinates have not been loaded, do not record the climb
         if not self.holdCoordinatesLoaded:
+            print("Hold coordinates not loaded yet, cannot record climb.")
             return
         
         self.frameCounter += 1

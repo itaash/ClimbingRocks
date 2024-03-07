@@ -100,7 +100,7 @@ class ClimbAnalyserThread(QThread):
                     "Please ask the creators for help."
         return self.climbingTip
     
-    def findClimbingTip(self, submetric) -> str:
+    def findClimbingTip(self, submetric: str) -> str:
         """
         returns a climbing tip based on the submetric passed as an argument
         if more than one tip is available for the submetric, a random tip corresponding to the submetric is returned
@@ -118,7 +118,7 @@ class ClimbAnalyserThread(QThread):
 
             climbingTip = random.choice(climbingTipsforSubmetric)
         except:
-            climbingTip = ""
+            climbingTip = "Could not find a tip for the submetric " + submetric + ". \n Please contact the developers for help."
 
         return climbingTip
 

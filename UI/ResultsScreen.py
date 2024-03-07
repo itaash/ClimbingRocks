@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSlot, QTimer, Qt, pyqtSignal
-from PyQt5.QtGui import QFont, QPixmap, QImage, QColor
+from PyQt5.QtCore import pyqtSlot, QTimer, Qt, pyqtSignal, QRectF
+from PyQt5.QtGui import QFont, QPixmap, QImage, QColor, QLinearGradient, QPainter, QPainterPath, QBrush
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsDropShadowEffect, QDialog, QStackedLayout
 
 
@@ -48,9 +48,11 @@ class ResultsScreen(QWidget):
         hboxLayout = QHBoxLayout()
         hboxLayout.setSpacing(50)
         hboxLayout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
+        # Create the three metric widgets
         self.pressureWidget = MetricWidget("Pressure", "UI/UIAssets/loading.gif", ClimbAnalyserThread.submetricsLabels["pressure"], colour='#0A9DAE', parent=self)
         self.positioningWidget = MetricWidget("Positioning", "UI/UIAssets/loading.gif", submetrics = ClimbAnalyserThread.submetricsLabels["positioning"], colour='#CA2B3B', parent=self)
         self.progressWidget = MetricWidget("Progress", "UI/UIAssets/loading.gif", submetrics = ClimbAnalyserThread.submetricsLabels["progress"], colour='#8C16F3', parent=self)
+        # extremely pink: #FF79B4
         hboxLayout.addWidget(self.pressureWidget)
         hboxLayout.addWidget(self.positioningWidget)
         hboxLayout.addWidget(self.progressWidget)
@@ -84,7 +86,7 @@ class ResultsScreen(QWidget):
         # create a 10 second timer to emit the signal to exit the results screen, starts once the tip is displayed
         self.exitTimer = QTimer(self)
         self.exitTimer.setSingleShot(True)
-        self.exitTimer.timeout.connect(self.handleExitTimer)
+        self.exitTimer.timeout.connect(self.exitClimbingScreen)
 
         # start a 0 second timer to start climbing analysis, connect the signal from the climbanalyser to update the metrics
         self.startTimer = QTimer(self)
@@ -109,9 +111,9 @@ class ResultsScreen(QWidget):
             self.exitTimer.start(10000)
         pass
 
-    @pyqtSlot()
-    def handleExitTimer(self):
-        print("Exiting results screen")
+
+    def exitClimbingScreen(self):
+        self.exitTimer.stop()
         self.timeoutSignal.emit()
 
     @pyqtSlot()
@@ -343,6 +345,19 @@ class TipDialog(QWidget):
         dividerLine.setFixedHeight(4)
         dividerLine.setStyleSheet("background-color: #222222; border-radius: 2px;")
         
+        # Add button to exit climbing screen
+        exitButton = QPushButton("End Climbing Session", self)
+        exitButton.clicked.connect(self.parent.exitClimbingScreen)
+        exitButton.setFixedSize(300, 60)
+        exitButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #CB2727;"\
+                                 "border: none; padding: 10px; border-radius: 20px;")
+        
+        # Add shadow effect to the button
+        shadowEffect = QGraphicsDropShadowEffect()
+        shadowEffect.setBlurRadius(40)
+        shadowEffect.setColor(QColor("#222222"))
+        shadowEffect.setOffset(0, 0)
+        exitButton.setGraphicsEffect(shadowEffect)
 
         self.layout.addSpacing(30) 
         self.layout.addWidget(submetricLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -351,14 +366,37 @@ class TipDialog(QWidget):
         self.layout.addSpacing(30)
         self.layout.addWidget(self.tipLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
+
+
         self.layout.addStretch(1)
 
-        # Set the style for the widget - a rounded rectangle with a shadow
-        tipWrapper = QWidget(self)
-        tipWrapper.setStyleSheet("border-radius: 20px; background-color: #8C16F3; padding: 20px;")
-        tipWrapper.setLayout(self.layout)
-        tipWrapper.setFixedSize(self.width(), self.height())
+        self.layout.addSpacing(30)
+        self.layout.addWidget(exitButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.layout.addSpacing(30)
 
+
+        # Set the layout for the widget
+        self.setLayout(self.layout)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Create a linear gradient for the background
+        gradient = QLinearGradient(0, 0, self.width(), 0)
+        gradient.setColorAt(0, QColor("#0A9DAE"))  # Start color
+        # gradient.setColorAt(0.5, QColor("#CA2B3B"))  # End color
+        gradient.setColorAt(1, QColor("#8C16F3"))  # End color
+
+        # Draw the rounded rectangle with the gradient background
+        painter.setBrush(QBrush(gradient))
+        painter.setPen(Qt.NoPen)
+
+        radius = 20
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()), radius, radius)
+        painter.drawPath(path)
+    
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
