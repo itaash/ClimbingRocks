@@ -236,7 +236,8 @@ def visualisePosition(climbData, holdsCoordinates):
     # Convert the image to numpy array
     img1 = np.array(canvas.renderer.buffer_rgba())
     img2 = np.zeros((200, 200, 3), dtype=np.uint8)
-    img = "C:\\Users\\danic\\OneDrive\\Documents\\GitHub\\ClimbingRocks\\UI\\UIAssets\\position_placeholder.png"
+    
+    img = f"UI/UIAssets/position_placeholder.png"
     #plt.close()  # Close the figure to free up resources
 
     return img
