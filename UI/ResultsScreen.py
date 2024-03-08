@@ -409,6 +409,8 @@ class TipDialog(QWidget):
         # gradient.setColorAt(0, QColor("#0A9DAE"))  # Start color
         gradient.setColorAt(1, QColor("#CA2B3B"))  # color at right
         gradient.setColorAt(0, QColor("#8C16F3"))  # color at left
+        # gradient.setColorAt(0, QColor("#0A9DAE"))  # color at left
+
 
         # Draw the rounded rectangle with the gradient background
         painter.setBrush(QBrush(gradient))

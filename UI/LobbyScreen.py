@@ -89,15 +89,16 @@ class LobbyScreen(QWidget):
         scroll_bar_style = """
             QScrollBar:vertical {
                 background: solid;  /* Scroll bar background color */
-                border-radius: 6px;
-                width: 12px;  /* Width of the scroll bar */
-                padding: 8px 0px 8px 0px;    
+                border-radius: 3px;
+                width: 16px;  /* Width of the scroll bar */
+                padding: 7px 3px 7px 3px;    
                 }
 
             QScrollBar::handle:vertical {
                 background: #222222;  /* Scroll pill color */
                 min-height: 2px;  /* Height of the scroll pill */
-                border-radius: 6px;
+                width: 10px;  /* Width of the scroll pill */
+                border-radius: 5px;
             }
 
             QScrollBar::add-line:vertical {
