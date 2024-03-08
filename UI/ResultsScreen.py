@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButt
 
 class ResultsScreen(QWidget):
     timeoutSignal = pyqtSignal()
-    def __init__(self, climberName, climbSuccessful, parent=None):
+    def __init__(self, climberName = "", climbSuccessful = False, parent=None):
         super().__init__(parent)
 
         # Set up the layout
@@ -105,14 +105,18 @@ class ResultsScreen(QWidget):
         if self.stackedLayout.currentIndex() == 0:
             self.stackedLayout.setCurrentIndex(1)
             self.tipButton.setText("Click to show \nClimb metrics")
+            self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #CB2727; border: none; padding: 10px; border-radius: 20px;")
         elif self.stackedLayout.currentIndex() == 1:
             self.stackedLayout.setCurrentIndex(0)
             self.tipButton.setText("Click to see \nClimbing tip")
+            self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px; border-radius: 20px;")
             self.exitTimer.start(10000)
         pass
 
 
     def exitClimbingScreen(self):
+        print("Exiting climbing screen")
+        self.timer.stop()
         self.exitTimer.stop()
         self.timeoutSignal.emit()
 
@@ -171,6 +175,24 @@ class ResultsScreen(QWidget):
         self.tipBoxWidget = QWidget()
         self.tipBoxWidget.setLayout(self.tipHBoxLayout)
         self.stackedLayout.insertWidget(1, self.tipBoxWidget)
+
+    def setCurrentClimber(self, climberName):
+        self.climberName = climberName
+
+    def setSuccessfulClimb(self, successful):
+        overallScoreStr = str(self.climbAnalyser.getClimbingScore())
+
+        self.climbSuccessful = successful
+
+        if self.climbSuccessful:
+            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+                        "Here's why:"
+        else:
+            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+                        "Take notes:"
+
+
+        self.climbFinishedLabel.setText(message)
 
 
     def getLowestWeightedSubmetric(self, pressureSubmetrics, positioningSubmetrics, progressSubmetrics):
@@ -336,7 +358,7 @@ class TipDialog(QWidget):
         submetricLabel.setStyleSheet("font-size: 34px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px; font-weight: bold;")
 
         self.tipLabel = QLabel(tip)
-        self.tipLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px;")
+        self.tipLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px; font-weight: 300")
         self.tipLabel.setFixedWidth(round(self.width() * 0.8))
         self.tipLabel.setWordWrap(True)
 
@@ -349,12 +371,12 @@ class TipDialog(QWidget):
         exitButton = QPushButton("End Climbing Session", self)
         exitButton.clicked.connect(self.parent.exitClimbingScreen)
         exitButton.setFixedSize(300, 60)
-        exitButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #CB2727;"\
+        exitButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d;"\
                                  "border: none; padding: 10px; border-radius: 20px;")
         
         # Add shadow effect to the button
         shadowEffect = QGraphicsDropShadowEffect()
-        shadowEffect.setBlurRadius(40)
+        shadowEffect.setBlurRadius(50)
         shadowEffect.setColor(QColor("#222222"))
         shadowEffect.setOffset(0, 0)
         exitButton.setGraphicsEffect(shadowEffect)
@@ -384,9 +406,9 @@ class TipDialog(QWidget):
 
         # Create a linear gradient for the background
         gradient = QLinearGradient(0, 0, self.width(), 0)
-        gradient.setColorAt(0, QColor("#0A9DAE"))  # Start color
-        # gradient.setColorAt(0.5, QColor("#CA2B3B"))  # End color
-        gradient.setColorAt(1, QColor("#8C16F3"))  # End color
+        # gradient.setColorAt(0, QColor("#0A9DAE"))  # Start color
+        gradient.setColorAt(1, QColor("#CA2B3B"))  # color at right
+        gradient.setColorAt(0, QColor("#8C16F3"))  # color at left
 
         # Draw the rounded rectangle with the gradient background
         painter.setBrush(QBrush(gradient))

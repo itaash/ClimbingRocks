@@ -14,7 +14,7 @@ class ForceReceivingThread(QThread):
         self.currentForceList = [] # List to store the force values received from the Arduino
         self.parent = parent
 
-        self.connectToArduino(self, "/dev/ttyACM0", 9600)
+        self.connectToArduino("/dev/ttyACM0", 9600)
 
         self.recording = False
 
@@ -37,6 +37,7 @@ class ForceReceivingThread(QThread):
             print("Error connecting to Arduino: ", e)
             self.connected = False
             self.connectedToArduino.emit(self.connected)
+            raise e
 
     @pyqtSlot(bool)
     def startRecording(self, started):
