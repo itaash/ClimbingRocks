@@ -13,6 +13,7 @@ from UI.ResultsScreen import ResultsScreen
 from DataCapture.CameraSender import CameraSender
 from DataCapture.HoldFinder import HoldFindingThread
 from DataCapture.PoseEstimator import PoseEstimatorThread
+from DataCapture.ForceReceiver import ForceReceivingThread
 from error import *
 
 class MainWindow(QMainWindow):
@@ -25,12 +26,20 @@ class MainWindow(QMainWindow):
         self.splashScreen = SplashScreen(self)
         self.setCentralWidget(self.splashScreen)
 
+        # Variables
+        self.currentClimber = ""
+        self.numHolds = 10
+        self.poseEstimationModel = "lightning"
+
         # flags
         self.firstFrameReceived = False
         self.cameraConnected = False
         self.holdFindingModelLoaded = False
         self.poseEstimatorModelLoaded = False
         self.climbFinished = False
+
+        # declare screens
+        self.holdFindingScreen = None
 
         try:    
 
@@ -50,10 +59,16 @@ class MainWindow(QMainWindow):
             self.splashScreen.setProgress(20)
             self.cameraSender.start()
 
+            # Create force receiving thread - uncomment when force sensor is connected
+            # self.forceReceivingThread = ForceReceivingThread(10, self)
+            # self.forceReceivingThread.connectedToArduino.connect()
+            # self.forceReceivingThread.start()
+            # self.splashScreen.setProgress(30)
+
             # Create hold finding thread
             self.holdFindingThread = HoldFindingThread(self)
             self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
-            self.splashScreen.setProgress(30)
+            self.splashScreen.setProgress(40)
             self.holdFindingThread.start()
 
 
@@ -83,7 +98,8 @@ class MainWindow(QMainWindow):
             pass
 
     def goToHoldFindingScreen(self):
-        self.holdFindingScreen = HoldFindingScreen(self)
+        if self.holdFindingScreen is None:
+            self.holdFindingScreen = HoldFindingScreen(self)
         self.currentClimber = self.lobbyScreen.getClimberName()
         self.lobbyScreen.setParent(None)
         self.setCentralWidget(self.holdFindingScreen)
@@ -102,7 +118,8 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
         self.holdFindingModelLoaded = True
-        self.poseEstimatorThread = PoseEstimatorThread(self)
+        self.poseEstimatorThread = PoseEstimatorThread(self.poseEstimationModel, self)
+
         self.poseEstimatorThread.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
         self.poseEstimatorThread.start()
 
@@ -149,6 +166,7 @@ class MainWindow(QMainWindow):
     def goToLobbyScreen(self):
         self.resultsScreen.setParent(None)
         self.setCentralWidget(self.lobbyScreen)
+        
         pass
 
 

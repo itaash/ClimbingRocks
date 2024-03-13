@@ -29,7 +29,7 @@ def visualisePressure(climbData, progressSubmetrics):
     # currently returns a black image as a placeholder for the visualisation so other parts of the app can be tested
 
     img1 = np.zeros((200, 200, 3), dtype=np.uint8)
-    img = "C:\\Users\\danic\\OneDrive\\Documents\\GitHub\\ClimbingRocks\\UI\\UIAssets\\pressure_placeholder.png"
+    img = "UI/UIAssets/pressure_placeholder.png"
     return img
 
 

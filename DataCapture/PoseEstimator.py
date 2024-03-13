@@ -30,9 +30,9 @@ class PoseEstimatorThread(QThread):
     'right_ankle': 16
     }   
 
-    def __init__(self, parent):
+    def __init__(self, model = "lightning", parent = None):
         super(PoseEstimatorThread, self).__init__(parent)
-        self.modelPath = "models/movenet_thunder_f16.tflite"
+        self.modelPath = f"models/movenet_{model}_f16.tflite"
         self.holdCoordinatePath = "data/holdCoordinates.csv"
         self.interpreter = None
         self.inputDetails = None
@@ -49,9 +49,11 @@ class PoseEstimatorThread(QThread):
         self.cameraSender = parent.cameraSender
         self.cameraSender.cameraConnectSignal.connect(self.oncameraConnectSignal)
         self.cameraSender.frameSignal.connect(self.onFrameSignal)
-        # try:
-        self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
-        # except:
+        try:
+            self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
+        except:
+            self.parent.holdFindingScreen = HoldFindingScreen(parent)
+            self.parent.holdFindingScreen.holdsFoundSignal.connect(self.getHoldsCoordinates)
         #     pass
 
         self.poseEstimatorModelLoaded = False
@@ -369,7 +371,11 @@ class PoseEstimatorThread(QThread):
         else:
             return (None, None)
 
+
 class MainWindow(QWidget):
+    """
+    Skeleton class for the main window of the application. Used to test the PoseEstimatorThread.
+    """
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowTitle("Climbing Rocks")
@@ -492,6 +498,8 @@ if __name__ == '__main__':
 
     from CameraSender import CameraSender
     from UI.ClimbingScreen import ClimbingScreen
+    from UI.HoldFindingScreen import HoldFindingScreen
+
 
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -500,3 +508,4 @@ if __name__ == '__main__':
 else:
     from DataCapture.CameraSender import CameraSender
     from UI.ClimbingScreen import ClimbingScreen
+    from UI.HoldFindingScreen import HoldFindingScreen

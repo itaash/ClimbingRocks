@@ -68,6 +68,12 @@ class HoldFindingScreen(QWidget):
 
         self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
 
+        
+        # flag to indicate if the holds have been found
+        self.holdsTimerStarted = False
+        self.holdsFound = False
+        self.visible = False
+
         # set up the hold finding thread
         self.holdFindingThread = parent.holdFindingThread
         if parent.holdFindingModelLoaded:
@@ -75,8 +81,6 @@ class HoldFindingScreen(QWidget):
         else:
             self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
 
-        # flag to indicate if the holds have been found
-        self.holdsFound = False
 
 
     @pyqtSlot()
@@ -165,18 +169,35 @@ class HoldFindingScreen(QWidget):
                 "padding: 5px;"  # Padding for pill shape
             )
 
+    # function to be called when the screen is shown
+    def showEvent(self, event):
+
+        self.visible = True
+        
+        # Start timer to find holds if the model is loaded
+        if self.parent.holdFindingModelLoaded and not self.holdsTimerStarted:
+            self.findHoldsTimer = QTimer(self)
+            self.findHoldsTimer.setSingleShot(True)
+            self.findHoldsTimer.timeout.connect(self.findHolds)
+            self.findHoldsTimer.start(2500)
+            self.holdsTimerStarted = True
+
+
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
         """
         called when the model is loaded
         """
         self.parent.holdFindingModelLoaded = True
+        if not self.holdsTimerStarted and self.isVisible():
+            self.findHoldsTimer = QTimer(self)
+            self.findHoldsTimer.setSingleShot(True)
+            self.findHoldsTimer.timeout.connect(self.findHolds)
+            self.findHoldsTimer.start(2500)
+            self.holdsTimerStarted = True
 
-        # Start timer to find holds
-        self.findHoldsTimer = QTimer(self)
-        self.findHoldsTimer.setSingleShot(True)
-        self.findHoldsTimer.timeout.connect(self.findHolds)
-        self.findHoldsTimer.start(2500)
+
+
 
     @pyqtSlot()
     def findHolds(self):
