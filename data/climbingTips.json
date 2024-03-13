@@ -19,24 +19,25 @@
       "PrecisionPlacement": "Great job! For next time, focus on precision when placing hands on holds to minimize the need for constant adjustments.",
       "ReadRockTexture": "Killer climb! Learn to read the rock texture to anticipate the type of grip required and reduce unnecessary micro-adjustments."
     },
-    "FootSmoothness": {
-      "PrecisePlacement": "TO DO Practice precise foot placement to ensure a solid and stable foundation.",
-      "AnkleFlexibility": "TO DODevelop ankle flexibility to adapt to different foothold angles without disrupting balance.",
-      "WeightDistribution": "TO DOConcentrate on weight distribution between feet to enhance overall stability during climbs."
+    "FootSmoothness MOVED TO SMOOTHNESS aka COG": {
+      "PrecisePlacement": "No",
+      "AnkleFlexibility": "No",
+      "WeightDistribution": "No"
     },
     "Strength": {
-      "StrengthTraining": "TO DO Implement a targeted strength-training program to build specific climbing muscles.",
-      "BodyPositioning": "TO DO Focus on body positioning to utilize core strength and reduce reliance on arm strength alone.",
-      "IncreaseDifficulty": "TO DO Gradually increase climbing difficulty to challenge and enhance overall strength."
+      "StrengthTraining": "Great work up there! Next time, practice placing your hands once and not letting go until you make your next move.",
+      "BodyPositioning": "Nice climb! Focus on body positioning to utilize core strength and reduce reliance on arm strength alone.",
+      "IncreaseDifficulty": "Cool moves, climber! A more even distribution of your weight will reduce fatigue on your individual arms and legs."
     },
     "GripStrength": {
-      "StrengthenExercises": "Great work up there! Next time, practice placing your hands once and not letting go until you make your next move.",
-      "IndividualFingerStrength": "TO DO Work on finger strength individually to improve crimping ability and overall grip stability.",
-      "HandPositioning": "TO DO Pay attention to proper hand positioning on holds to maximize grip efficiency."
+      "StrengthenExercises": "No",
+      "IndividualFingerStrength": "No",
+      "HandPositioning": "No"
     },
     "CenterOfGravity": {
       "EngageCoreMuscles": "Cool climb! Next time, try to engage your core muscles to maintain a stable center of gravity during movements.",
       "ControlledBreathing": "Right on pal! Practice controlled breathing to aid in maintaining balance and coordination.",
+      "PrecisePlacement": "This isn't Footloose! Practice precise foot placement to ensure a solid and stable foundation.",
       "HipMovement": "You looked great up there! For future climbs, keep your hips closer to the wall to reduce movement and rotation, and conserve energy."
     },
     "ArmBend": {
