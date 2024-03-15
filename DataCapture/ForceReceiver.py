@@ -11,15 +11,20 @@ class ForceReceivingThread(QThread):
         self.connected = False
         self.forceList = [] # List to store all the force values received from the Arduino over time
         self.numHolds = numHolds # Number of holds on the wall, determines the number of force sensors and the size of the forceList
-        self.currentForceList = [] # List to store the force values received from the Arduino
         self.parent = parent
-
-        self.connectToArduino("COMx", 9600)
-
         self.recording = False
+
+        self.connectToArduino("COM3", 9600)
+
+        self.startRecordingFlag = False # Flag to start recording force data
+        self.recording = False # Flag to indicate if force data is being recorded
+        self.stopRecordingFlag = False # Flag to stop recording force data
 
         parent.poseEstimatorThread.climbBegunSignal.connect(self.startRecording)
         parent.poseEstimatorThread.climbFinishedSignal.connect(self.stopRecording)
+
+    def run(self):
+        self.recordForce()
 
     def connectToArduino(self, port, baudrate):
         """
@@ -36,21 +41,19 @@ class ForceReceivingThread(QThread):
             self.connected = False
             self.connectedToArduino.emit(self.connected)
             raise e
+    
 
     @pyqtSlot(bool)
     def startRecording(self, climbStarted):
         """
-        Begins receiving force data from the Arduino.
+        Changes state variables to start recording if climbStarted is true or to discard the recorded values if climbStarted is False
         """
-
-        self.startTime = time.time() * 1000 # Start time in milliseconds
-        if self.connected:
-            if climbStarted:
-                self.recording = True
-                self.recordForce()
-            else: # If the climb has not started, clear the force list
-                self.forceList.clear()
-                self.recording = False
+        self.recording = climbStarted
+        if not climbStarted:
+            # Clear the force list if climb has not started
+            self.forceList.clear()
+        else:
+            self.startTime = time.time() * 1000
                 
     @pyqtSlot(bool)
     def stopRecording(self, climbSuccessfull):
@@ -62,29 +65,54 @@ class ForceReceivingThread(QThread):
         if self.connected:
             # self.ser.close()
             # self.connected = False
+            pass  # Placeholder for closing serial connection
         # Save the force list to a file with timestamps
-            pass
         with open("forceData.csv", "w") as file:
             writer = csv.writer(file)
-            writer.writerow(["Time"] + [f"Force_hold_{i}" for i in range(0, self.numHolds)])
-            writer.writerows(self.forceList)    
+            writer.writerow(["Time"] + [f"hold{i}" for i in range(0, self.numHolds)])
+            writer.writerows(self.forceList)
+        self.forceList.clear()
 
     
     def recordForce(self):
         """
-        Receives force data from the Arduino and appends it to the force list.
-        """
-        while self.connected and self.recording:
-            try:
-                force = self.ser.readline().split( )
-            except Exception as e:
-                print("Error receiving force: ", e)
-                self.connected = False
-                self.connectedToArduino.emit(self.connected)
-                break
+        Receives force data from the Arduino.
+        Starts recording force data when the climb begins and stops when the climb ends. 
+        Clears the force list if the climbBegunSignal is received with a False argument.
+        When the climbFinishedSignal is received, saves the force list to a file and clears the force list.
 
-            self.currentForceList.append(force)
-            if len(self.currentForceList) == self.numHolds:
-                # Append the current force list to the force list with a timestamp
-                self.forceList.append([time.time() * 1000 - self.startTime] + self.currentForceList)
-                self.currentForceList = []
+        """
+        while True:
+            if self.recording and self.connected:
+                # Read force data from Arduino
+                forceData = self.ser.readline().decode('utf-8')
+                # Split force data into individual force values for each hold
+                forces = forceData.split(',')
+                try:
+                    forces = forces[0:len(forces)-1]
+                except Exception as e:
+                    pass
+
+                if len(forces) == self.numHolds:
+                    # Append force values to the force list
+                    self.forceList.append([(time.time() * 1000) - self.startTime] + forces)
+                    time.sleep(0.1)
+                else:
+                    print("Invalid force data:", forceData)
+            
+            time.sleep(0.1) # Sleep for 100ms if not recording or not connected to the Arduino to avoid busy waiting
+
+        # while self.connected and self.recording:
+        #     try:
+        #         force = self.ser.readline().split( )
+        #     except Exception as e:
+        #         print("Error receiving force: ", e)
+        #         self.connected = False
+        #         self.connectedToArduino.emit(self.connected)
+        #         break
+
+        #     self.currentForceList.append(force)
+        #     if len(self.currentForceList) == self.numHolds:
+        #         # Append the current force list to the force list with a timestamp
+        #         self.forceList.append([time.time() * 1000 - self.startTime] + self.currentForceList)
+        #         self.currentForceList = []

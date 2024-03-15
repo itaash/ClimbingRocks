@@ -60,12 +60,6 @@ class MainWindow(QMainWindow):
             self.splashScreen.setProgress(20)
             self.cameraSender.start()
 
-            # Create force receiving thread - uncomment when force sensor is connected
-            # self.forceReceivingThread = ForceReceivingThread(10, self)
-            # self.forceReceivingThread.connectedToArduino.connect()
-            # self.forceReceivingThread.start()
-            # self.splashScreen.setProgress(30)
-
             # Create hold finding thread
             self.holdFindingThread = HoldFindingThread(self)
             self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
@@ -124,6 +118,12 @@ class MainWindow(QMainWindow):
         self.poseEstimatorThread.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
         self.poseEstimatorThread.start()
 
+        
+        # Create force receiving thread - uncomment when force sensor is connected
+        self.forceReceivingThread = ForceReceivingThread(2, self)
+        # self.forceReceivingThread.connectedToArduino.connect()
+        self.forceReceivingThread.start()
+
     @pyqtSlot()
     def onPoseEstimatorModelLoaded(self):
         self.poseEstimatorModelLoaded = True
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # app.setWindowIcon(app.style().standardIcon(getattr(QStyle, 'SP_DesktopIcon')))
     mainWindow = MainWindow()
-    mainWindow.showFullScreen()
-    # mainWindow.show()
+    # mainWindow.showFullScreen()
+    mainWindow.show()
     
     sys.exit(app.exec_())
