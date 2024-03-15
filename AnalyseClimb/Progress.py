@@ -163,12 +163,15 @@ def calculate_hesitation_score(results_left, results_right):
 
 def calculate_time_score(timeclimb):
     timeclimb = 100
+    # TODO: 
     return timeclimb
 
 
 # Function to calculate combined score by averaging climbing duration score and hesitation score
 def calculate_combined_score(climbing_duration_score, hesitation_score, hold_score):
+    
     return (climbing_duration_score*0.3 + hesitation_score*0.3 + hold_score*0.4) 
+
     
 
 def calculateProgress(climbData, holdsCoordinates):
@@ -200,27 +203,11 @@ def visualiseProgress(climbData, holdsCoordinates):
     result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
 
     data = sum_left_right(result_left, result_right, holdsCoordinates)
-    colors = sb.color_palette("viridis", len(data.columns))
 
-    # Create stacked bar chart with specified parameters
-    graph = data.plot(kind='bar', stacked=True, color=colors, width=1, legend=False, figsize=(3, 6))
-
-    plt.ylabel('Time')
-    plt.xticks([])
-    plt.title('Time on each hold')
-
-    # Get the figure
-    fig = graph.get_figure()
-
-    # Render the figure as an image
-    canvas = FigureCanvas(fig)
-    canvas.draw()
-
-
-    # Convert the image to numpy array
-    img2 = np.array(canvas.renderer.buffer_rgba())
-    img1 = np.zeros((200, 200, 3), dtype=np.uint8)
     img = f"UI/UIAssets/progress/progress100.png"
-    plt.close()  # Close the figure to free up resources
+    img1 = f"UI/UIAssets/progress/progress800.png"
+    img2 = f"UI/UIAssets/progress/progress60.png"
+    img3 = f"UI/UIAssets/progress/progress40.png"
+    img4 = f"UI/UIAssets/progress/progress20.png"
 
     return img
