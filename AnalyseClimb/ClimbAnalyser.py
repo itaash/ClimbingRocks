@@ -18,7 +18,7 @@ class ClimbAnalyserThread(QThread):
     submetricsWeights = {"pressure": [0.5, 0.5],
                          "positioning": [0.5, 0.5],
                          "progress": [0.5, 0.5]
-    }5
+    }
 
     def __init__(self, climberName, parent):
         super().__init__(parent)
