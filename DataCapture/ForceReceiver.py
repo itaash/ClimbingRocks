@@ -14,11 +14,9 @@ class ForceReceivingThread(QThread):
         self.currentForceList = [] # List to store the force values received from the Arduino
         self.parent = parent
 
-        self.connectToArduino("/dev/ttyACM0", 9600)
+        self.connectToArduino("COMx", 9600)
 
         self.recording = False
-
-
 
         parent.poseEstimatorThread.climbBegunSignal.connect(self.startRecording)
         parent.poseEstimatorThread.climbFinishedSignal.connect(self.stopRecording)
@@ -29,7 +27,7 @@ class ForceReceivingThread(QThread):
         """
         try:
             self.ser = serial.Serial(port, baudrate)
-            time.sleep(2)
+            # time.sleep(1) # need to wait for the arduino to initialize
             self.connected = True
             self.connectedToArduino.emit(self.connected)
             print("Connected to Arduino")
@@ -40,16 +38,16 @@ class ForceReceivingThread(QThread):
             raise e
 
     @pyqtSlot(bool)
-    def startRecording(self, started):
+    def startRecording(self, climbStarted):
         """
         Begins receiving force data from the Arduino.
         """
 
         self.startTime = time.time() * 1000 # Start time in milliseconds
         if self.connected:
-            if started:
-                self.recordForce()
+            if climbStarted:
                 self.recording = True
+                self.recordForce()
             else: # If the climb has not started, clear the force list
                 self.forceList.clear()
                 self.recording = False
@@ -62,12 +60,13 @@ class ForceReceivingThread(QThread):
         self.recording = False
 
         if self.connected:
-            self.ser.close()
-            self.connected = False
+            # self.ser.close()
+            # self.connected = False
         # Save the force list to a file with timestamps
+            pass
         with open("forceData.csv", "w") as file:
             writer = csv.writer(file)
-            writer.writerow(["Time"] + [f"Force {i}" for i in range(1, self.numHolds + 1)])
+            writer.writerow(["Time"] + [f"Force_hold_{i}" for i in range(0, self.numHolds)])
             writer.writerows(self.forceList)    
 
     
@@ -77,14 +76,15 @@ class ForceReceivingThread(QThread):
         """
         while self.connected and self.recording:
             try:
-                force = self.ser.readline().decode("utf-8").strip()
-                self.currentForceList.append(force)
-                if len(self.currentForceList) == self.numHolds:
-                    # Append the current force list to the force list with a timestamp
-                    self.forceList.append([time.time() * 1000 - self.startTime] + self.currentForceList)
-                    self.currentForceList = []
+                force = self.ser.readline().split( )
             except Exception as e:
                 print("Error receiving force: ", e)
                 self.connected = False
                 self.connectedToArduino.emit(self.connected)
                 break
+
+            self.currentForceList.append(force)
+            if len(self.currentForceList) == self.numHolds:
+                # Append the current force list to the force list with a timestamp
+                self.forceList.append([time.time() * 1000 - self.startTime] + self.currentForceList)
+                self.currentForceList = []

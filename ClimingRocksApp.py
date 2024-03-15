@@ -2,7 +2,7 @@
 import sys, os, time, cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QThread, QRect
-from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QImage
+from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QImage, QIcon
 
 
 from UI.SplashScreen import SplashScreen
@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__()
         self.setWindowTitle("Climbing Rocks")
+        self.setWindowIcon(QIcon("UI/UIAssets/logo_dark.png"))
         self.setFixedSize(1280, 800)
         self.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
 
@@ -176,6 +177,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # app.setWindowIcon(app.style().standardIcon(getattr(QStyle, 'SP_DesktopIcon')))
     mainWindow = MainWindow()
-    mainWindow.show()
+    mainWindow.showFullScreen()
+    # mainWindow.show()
     
     sys.exit(app.exec_())

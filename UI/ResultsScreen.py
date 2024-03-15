@@ -157,6 +157,9 @@ class ResultsScreen(QWidget):
         progressSubmetrics = self.climbAnalyser.getProgressSubmetrics()
         progressVisualisation = self.climbAnalyser.getProgressVisualisation()
 
+        lowestWeightedSubmetric = self.climbAnalyser.getLowestWeightedSubmetric()
+        climbingTip = self.climbAnalyser.getClimbingTip()
+
         self.pressureWidget.updateImage(pressureVisualisation)
         self.pressureWidget.updateScore(pressureSubmetrics)
 
@@ -165,9 +168,6 @@ class ResultsScreen(QWidget):
 
         self.positioningWidget.updateImage(positioningVisualisation)
         self.positioningWidget.updateScore(positioningSubmetrics)
-
-        lowestWeightedSubmetric = self.climbAnalyser.getLowestWeightedSubmetric()
-        climbingTip = self.climbAnalyser.getClimbingTip()
 
         self.tipDialog = TipDialog(lowestWeightedSubmetric, climbingTip, self)
         self.tipHBoxLayout = QHBoxLayout()
@@ -354,11 +354,12 @@ class TipDialog(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
-        submetricLabel = QLabel(submetric)
+        submetricLabel = QLabel()
         submetricLabel.setStyleSheet("font-size: 34px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px; font-weight: bold;")
+        submetricLabel.setText(f"Your area of improvement is: <span style='font-family: Bungee;'>{submetric}</span>") 
 
         self.tipLabel = QLabel(tip)
-        self.tipLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px; font-weight: 300")
+        self.tipLabel.setStyleSheet("font-size: 28px; color: #ffffff; font-family: 'DM Sans'; background-color: transparent; padding: 10px; font-weight: 400")
         self.tipLabel.setFixedWidth(round(self.width() * 0.8))
         self.tipLabel.setWordWrap(True)
 
@@ -405,11 +406,11 @@ class TipDialog(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         # Create a linear gradient for the background
-        gradient = QLinearGradient(0, 0, self.width(), 0)
-        # gradient.setColorAt(0, QColor("#0A9DAE"))  # Start color
+        # gradient = QLinearGradient(0, 0, self.width(), 0)
+        gradient = QLinearGradient(0, self.height(), self.width(), 0)
         gradient.setColorAt(1, QColor("#CA2B3B"))  # color at right
-        gradient.setColorAt(0, QColor("#8C16F3"))  # color at left
-        # gradient.setColorAt(0, QColor("#0A9DAE"))  # color at left
+        gradient.setColorAt(0.5, QColor("#8C16F3"))  # color at in the middle
+        gradient.setColorAt(0, QColor("#0A9DAE"))  # color at left
 
 
         # Draw the rounded rectangle with the gradient background
@@ -464,7 +465,7 @@ if __name__ == "__main__":
     window.setFont(QFont("DM Sans"))
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
     
-    window.resultsScreen = ResultsScreen("Alex", False, window)
+    window.resultsScreen = ResultsScreen("Romiro", False, window)
     window.setCentralWidget(window.resultsScreen)
 
     
