@@ -12,7 +12,7 @@ class LeaderboardWidget(QWidget):
         super().__init__(parent)
 
         # Set fixed size for the widget
-        self.setFixedHeight(55)  # Adjust the height as needed
+        self.setFixedHeight(65)  # Adjust the height as needed
         self.setFixedWidth(350)  # Adjust the width as needed
 
         self.setFont(QFont("DM Sans"))
@@ -25,16 +25,18 @@ class LeaderboardWidget(QWidget):
         # Create labels for position, name, and score
         positionLabel = QLabel(str(position), self)
         positionLabel.setAlignment(Qt.AlignHCenter| Qt.AlignVCenter)
-        positionLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
+        positionLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 18px;")
 
         nameLabel = QLabel(name, self)
         nameLabel.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-        nameLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 15px;")
+        nameLabel.setStyleSheet("background-color: 'transparent'; color: #ffffff; font-weight: 500; line-height: 18px;")
 
         scoreLabel = QLabel(str(score), self)
         scoreLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-        scoreLabel.setStyleSheet(f"background-color: '#dddddd'; color: #222222; font-weight: 500; line-height: 20px; border-radius: {scoreLabel.height()//2};")
-        scoreLabel.setFixedWidth(55)
+        scoreLabel.setFixedWidth(40)
+        scoreLabel.setFixedHeight(40)
+        scoreLabel.setStyleSheet(f"background-color: '#dddddd'; color: #222222; font-weight: 500; line-height: 23px; border-radius: {scoreLabel.height()//2}; text-align: top;")
+
 
         # Create the layout for the widget
         layout = QHBoxLayout(self)
@@ -45,7 +47,7 @@ class LeaderboardWidget(QWidget):
 
 
         # Set fixed size for the widget
-        self.setFixedHeight(55)  # Adjust the height as needed
+        # self.setFixedHeight(55)  # Adjust the height as needed
 
         # Adjust label sizes to ensure consistent appearance
         positionLabel.setFixedWidth(35)
@@ -127,7 +129,7 @@ class LobbyScreen(QWidget):
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
-        leaderboardWrapper.setFixedHeight(parent.height() - 170)
+        leaderboardWrapper.setFixedHeight(parent.height() - 175)
         leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #c58af9;")
         leaderboardWrapper.setLayout(leaderboardLayout)
         leaderboardWrapper.setGraphicsEffect(shadow_effect)
@@ -142,17 +144,17 @@ class LobbyScreen(QWidget):
         # Right half: User input and start button
         inputLayout = QVBoxLayout()
         inputLayout.setAlignment(Qt.AlignTop)
-        inputLayout.addSpacing(200)
+        inputLayout.addSpacing(190)
         inputLabel = QLabel("ENTER NAME:")
         # inputLabel.setFixedWidth(400)
-        inputLabel.setStyleSheet("font-size: 50px; font-weight: bold; font-family: 'Bungee';")
+        inputLabel.setStyleSheet("font-size: 54px; font-weight: bold; font-family: 'Bungee';")
 
         self.nameInput = QLineEdit()
         self.nameInput.setFixedWidth(400)
-        self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 24px; font-weight: bold; border-radius: 10px; height: 40px; padding-left: 10px;")
+        self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 26px; font-weight: bold; border-radius: 10px; height: 40px; padding-left: 10px;")
         self.nameInput.setPlaceholderText("Nom nom nom")
         self.nameInput.setMaxLength(13)
-        self.nameInput.setFixedHeight(50)
+        self.nameInput.setFixedHeight(54)
 
         self.startButton = StartButton(self.startClimbing, self)
         self.startButton.setDisabled(True)

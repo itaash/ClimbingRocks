@@ -102,7 +102,7 @@ class ClimbingScreen(QWidget):
 
     @pyqtSlot(np.ndarray, tuple, tuple)
     def onInferenceSignal(self, keypoints, centerOfGravity, armAngles):
-        print("Inference signal received in ClimbingScreen")
+        # print("Inference signal received in ClimbingScreen")
         self.keypoints = keypoints
         self.centerOfGravity = centerOfGravity
         self.armAngles = armAngles        

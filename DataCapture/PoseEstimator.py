@@ -276,7 +276,6 @@ class PoseEstimatorThread(QThread):
         #     return
         # if hold coordinates have not been loaded, do not record the climb
         if not self.holdCoordinatesLoaded:
-            print("Hold coordinates not loaded yet, cannot record climb.")
             return
         
         self.frameCounter += 1
