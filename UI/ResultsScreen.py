@@ -14,13 +14,13 @@ class ResultsScreen(QWidget):
         
 
         # Add white space on the top
-        self.mainLayout.addSpacing(35)
+        self.mainLayout.addSpacing(53)
 
         #intro text
         self.climbFinishedLabel = QLabel()
         self.climbFinishedLabel.setIndent(180)
         self.climbFinishedLabel.setStyleSheet("font-size: 32px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: transparent; border-radius: 10px;")
-        self.climbFinishedLabel.setText(f"Hold on tight, {climberName}. \n\nWe're analysing your climb now...")
+        self.climbFinishedLabel.setText(f"Hold on tight, {climberName}. \nWe're analysing your climb now...")
 
 
         # Add the logo to the top left corner
@@ -37,7 +37,7 @@ class ResultsScreen(QWidget):
         self.mainLayout.addWidget(self.climbFinishedLabel, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         # Add space
-        self.mainLayout.addSpacing(60)
+        self.mainLayout.addSpacing(70)
 
         #add a stacked layout(contained within a widget) with the three metrics on one layer and the tip dialog widget on another
         self.stackedWidget = QWidget()
@@ -135,10 +135,10 @@ class ResultsScreen(QWidget):
         #     message = f"\t Skill issue, {self.climberName}, you scored <span style='font-size: 34px; color: #FF66B2;'>{overallScoreStr}</span>! \nTake notes:"
 
         if self.climbSuccessful:
-            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
                         "Here's why:"
         else:
-            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
+            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
                         "Take notes:"
 
 
