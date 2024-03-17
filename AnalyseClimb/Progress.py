@@ -123,20 +123,23 @@ def measure_climbing_duration(climbData):
 
 
 # Calculate score based on climbing duration and holds reached
-def calculate_hold_score(farthest_left, farthest_right, total_holds):
-    if farthest_left == farthest_right == total_holds:  # Climber completed the route
-        return 100  # Return the maximum possible score (100)
-    else:
-        missed_holds = total_holds - max(farthest_left, farthest_right)
-        penalty = 20 * missed_holds  # Subtract 20 points for each hold missed
-        score = 100 - penalty
+def calculate_hold_score(climbing_data, holdsCoordinates):
+
+    #holdsCoordinates[]
+    
+    #if farthest_left == farthest_right == total_holds:  # Climber completed the route
+        #return 100  # Return the maximum possible score (100)
+    #else:
+        #missed_holds = total_holds - max(farthest_left, farthest_right)
+        #penalty = 20 * missed_holds  # Subtract 20 points for each hold missed
+        score = 100
         return max(0, round(score, 2))  # Ensure score doesn't go below 0
    
 
 
 def calculate_hesitation_score(results_left, results_right):
 
-    error_factor = 20  # TO BE CHANGED WHEN TESTING
+    error_factor = 1  # TO BE CHANGED WHEN TESTING
 
     # Calculate the average time spent on each hold for left hand
     results_left['Average_Time_Left(ms)'] = results_left['Total_Time_Left(ms)'] / (results_left['End_Timestamp_Left(ms)'] - results_left['Start_Timestamp_Left(ms)'])
@@ -162,7 +165,10 @@ def calculate_hesitation_score(results_left, results_right):
 
 
 def calculate_time_score(timeclimb):
-    timeclimb = 100
+    if np.isnan(timeclimb):
+        timeclimb = 0
+    else:
+        timeclimb = timeclimb/1000
     # TODO: 
     return timeclimb
 
@@ -182,7 +188,8 @@ def calculateProgress(climbData, holdsCoordinates):
     timeclimb = measure_climbing_duration(climbing_data)
 
     hesitation_score = calculate_hesitation_score(result_left, result_right)
-    hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
+    #hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
+    hold_score = calculate_hold_score(climbing_data, holdsCoordinates)
     climbing_duration_score = calculate_time_score(timeclimb)
 
     combined_score = calculate_combined_score(climbing_duration_score, hesitation_score, hold_score)
@@ -201,13 +208,17 @@ def visualiseProgress(climbData, holdsCoordinates):
     threshold_distance = 10
     climbing_data = preprocess_data(climbData)
     result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
+    hesitation_score = calculate_hesitation_score(result_left, result_right)
 
-    data = sum_left_right(result_left, result_right, holdsCoordinates)
-
-    img = f"UI/UIAssets/progress/progress100.png"
-    img1 = f"UI/UIAssets/progress/progress800.png"
-    img2 = f"UI/UIAssets/progress/progress60.png"
-    img3 = f"UI/UIAssets/progress/progress40.png"
-    img4 = f"UI/UIAssets/progress/progress20.png"
-
+    if 0<= hesitation_score < 20:
+        img = f"UI/UIAssets/position/progress20.png"
+    elif 20<= hesitation_score < 40:
+        img = f"UI/UIAssets/progress/progress40.png"
+    elif 40<= hesitation_score < 60:
+        img = f"UI/UIAssets/progress/progress60.png"
+    elif 60<= hesitation_score < 80:
+        img = f"UI/UIAssets/progress/progress80.png"
+    else:
+        img = f"UI/UIAssets/progress/progress100.png"
+    
     return img

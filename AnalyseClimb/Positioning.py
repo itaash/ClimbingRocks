@@ -12,41 +12,47 @@ def preprocess_data(df):
 
 # Function to measure average arm angle throughout the climb
 def measure_arm_angle(data):
-    low_angle_threshold = 30  # Define a threshold for a 'low' arm angle
-    high_angle_threshold = 150  # Define a threshold for a 'high' arm angle
+    #low_angle_threshold = 30  # Define a threshold for a 'low' arm angle
+    #high_angle_threshold = 150  # Define a threshold for a 'high' arm angle
 
-    arm_angle_sum = 0
-    num_samples = len(data)
-    num_low_angles = 0
-    num_high_angles = 0
+    #arm_angle_sum = 0
+    #num_samples = len(data)
+    #num_low_angles = 0
+    #num_high_angles = 0
 
     # Convert 'Left Arm Angle' and 'Right Arm Angle' columns to numeric
-    data['Left Arm Angle'] = pd.to_numeric(data['Left Arm Angle'], errors='coerce')
-    data['Right Arm Angle'] = pd.to_numeric(data['Right Arm Angle'], errors='coerce')
+    #data['Left Arm Angle'] = pd.to_numeric(data['Left Arm Angle'], errors='coerce')
+    #data['Right Arm Angle'] = pd.to_numeric(data['Right Arm Angle'], errors='coerce')
 
-    for index, row in data.iterrows():
-        left_arm_angle = row['Left Arm Angle']
-        right_arm_angle = row['Right Arm Angle']
-
+    #for index, row in data.iterrows():
+     #   left_arm_angle = row['Left Arm Angle']
+      #  right_arm_angle = row['Right Arm Angle']
+#
         # Check for NaN values after conversion
-        if pd.notna(left_arm_angle) and pd.notna(right_arm_angle):
+        #if pd.notna(left_arm_angle) and pd.notna(right_arm_angle):
             # Calculate the average of left and right arm angles
-            avg_arm_angle = (left_arm_angle + right_arm_angle) / 2
-            arm_angle_sum += avg_arm_angle
+            #avg_arm_angle = (left_arm_angle + right_arm_angle) / 2
+            #arm_angle_sum += avg_arm_angle
 
             # Check if the average arm angle is 'low'
-            if avg_arm_angle < low_angle_threshold:
-                num_low_angles += 1
+            #if avg_arm_angle < low_angle_threshold:
+            #    num_low_angles += 1
 
-            if avg_arm_angle > high_angle_threshold:
-                num_high_angles += 1
+            #if avg_arm_angle > high_angle_threshold:
+                #num_high_angles += 1
 
     # Calculate the proportion of low arm angles
-    low_angle_proportion = num_low_angles / num_samples if num_samples > 0 else 0
+    #low_angle_proportion = num_low_angles / num_samples if num_samples > 0 else 0
 
     # Assign score based on the proportion of low arm angles
-    score = 100 - (low_angle_proportion * 100)
-    return max(0, round(score, 2))
+    score = (np.mean(data["Left Arm Angle"]) + np.mean(data["Right Arm Angle"]))/2
+
+    if score >= 170:
+        score = 100
+    elif 170 > score:
+        score = score/180*100
+    
+    return round(score, 2)
 
 
 # Function definition with separate results for right and left hands
@@ -203,42 +209,21 @@ def calculatePosition(climbData, holdsCoordinates):
 
 def visualisePosition(climbData, holdsCoordinates):
     # Create a DataFrame
-    threshold = 5 #VALUE TO BE CHANGED WHEN TESTING
-    data = {'Time': climbData['Timestamp(ms)'], 'Values': climbData['Center of Gravity X']}
-    df = pd.DataFrame(data)
+    #threshold = 5 #VALUE TO BE CHANGED WHEN TESTING
+    #data = {'Time': climbData['Timestamp(ms)'], 'Values': climbData['Center of Gravity X']}
+    climbing_data = preprocess_data(climbData)
+    arm_score = measure_arm_angle(climbing_data)
 
-    # Set up the seaborn style
-    sb.set(style="whitegrid")
-
-    # Plot the lineplot
-    ax = sb.lineplot(x='Time', y='Values', data=df)
-
-    # Add a horizontal line for the threshold
-    ax.axhline(y=threshold, color='green', linestyle='--', label='Threshold', alpha=0.7)
-
-    # Fill the area below the threshold with green color
-    ax.fill_between(df['Time'], 0, threshold, color='green', alpha=0.1)
-
-    # Remove grid lines
-    ax.grid(False)
-
-    # Set labels and title
-    plt.xlabel('Time')
-    plt.ylabel('Values')
-    plt.title('Values vs Time with Threshold')
-
-    fig = ax.get_figure()
-
-    # Render the figure as an image
-    canvas = FigureCanvasAgg(fig)
-    canvas.draw()
-
-    # Convert the image to numpy array
-    img1 = np.array(canvas.renderer.buffer_rgba())
-    img2 = np.zeros((200, 200, 3), dtype=np.uint8)
-    
-    img = f"UI/UIAssets/position_placeholder.png"
-    #plt.close()  # Close the figure to free up resources
+    if 0<= arm_score < 20:
+        img = f"UI/UIAssets/position/Position_0_30.png"
+    elif 20<= arm_score < 40:
+        img = f"UI/UIAssets/position/Position_30_60.png"
+    elif 40<= arm_score < 60:
+        img = f"UI/UIAssets/position/Position_60_90.png"
+    elif 60<= arm_score < 80:
+        img = f"UI/UIAssets/position/Position_105_135.png"
+    else:
+        img = f"UI/UIAssets/position/Position_135_165.png"
 
     return img
 
