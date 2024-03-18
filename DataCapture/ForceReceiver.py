@@ -67,7 +67,7 @@ class ForceReceivingThread(QThread):
             # self.connected = False
             pass  # Placeholder for closing serial connection
         # Save the force list to a file with timestamps
-        with open("forceData.csv", "w") as file:
+        with open("data/forceData.csv", "w") as file:
             writer = csv.writer(file)
             writer.writerow(["Time"] + [f"hold{i}" for i in range(0, self.numHolds)])
             writer.writerows(self.forceList)

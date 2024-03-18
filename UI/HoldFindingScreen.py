@@ -384,6 +384,18 @@ class HoldFindingScreen(QWidget):
         pixmap = QPixmap(qImage)
 
         return pixmap
+    
+    def reset(self):
+        self.visible = False
+        self.holdsFound = False
+        self.holdsTimerStarted = False
+        self.clearAreaLabel.show()
+        self.cameraSender.frameSignal.disconnect(self.updateLiveFeed)
+
+        self.holdFindingThread.reset()
+        # self.statusLabel.setFixedSize((self.parent.width()*2)//5, self.parent.height()//6) 
+        # self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+        #                             self.parent.height() - self.statusLabel.height() - 40)
 
 if __name__ == '__main__':
     import sys

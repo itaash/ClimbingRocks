@@ -369,6 +369,28 @@ class PoseEstimatorThread(QThread):
             return (cgX, cgY)
         else:
             return (None, None)
+        
+    def reset(self):
+        self.climbInProgress = False
+        self.climbBegun = False
+        self.climbSuccessful = None
+        self.keypointsData = []
+        self.holdCoordinatesLoaded = False
+        self.holdCoordinates = []
+        self.frameCounter = 0
+        self.keypoints = None
+        self.centerOfGravity = None, None
+        self.armAngles = None, None
+        self.leftHand = None, None
+        self.rightHand = None, None
+        self.leftFoot = None, None
+        self.rightFoot = None, None
+        self.lowestHoldY = None
+        self.highestHoldY = None
+        self.startTime = None
+        # self.cameraSender.frameSignal.disconnect(self.onFrameSignal)
+        # self.cameraSender.cameraConnectSignal.disconnect(self.oncameraConnectSignal)
+        
 
 
 class MainWindow(QWidget):

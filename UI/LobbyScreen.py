@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 
 class LeaderboardWidget(QWidget):
-    def __init__(self, position: int, name: str, score: int, parent):
+    def __init__(self, position: int, name: str, score: int, numRows: int, parent):
         super().__init__(parent)
 
         # Set fixed size for the widget
@@ -17,10 +17,17 @@ class LeaderboardWidget(QWidget):
 
         self.setFont(QFont("DM Sans"))
 
+        commonEdgeCornerRadius = 10
+
         # Create rounded rectangle background
         background = QLabel(self)
-        background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {self.height() // 2}px; border-bottom-right-radius: {self.height()//2}px; opacity: 75;")
         background.setFixedSize(self.width(), self.height())
+        if position != 1 and position != numRows:
+            background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {commonEdgeCornerRadius}px; border-top-right-radius: {commonEdgeCornerRadius}px; border-bottom-left-radius: {commonEdgeCornerRadius}px; border-bottom-right-radius: {commonEdgeCornerRadius}px; opacity: 75;")
+        elif position == 1:
+            background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {commonEdgeCornerRadius}px; border-bottom-right-radius: {commonEdgeCornerRadius}px; opacity: 75;")
+        else:
+            background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {commonEdgeCornerRadius}px; border-top-right-radius: {commonEdgeCornerRadius}px; border-bottom-left-radius: {self.height()//2}px; border-bottom-right-radius: {self.height()//2}px; opacity: 75;")
 
         # Create labels for position, name, and score
         positionLabel = QLabel(str(position), self)
@@ -82,7 +89,7 @@ class LobbyScreen(QWidget):
         leaderboardScrollArea.setWidget(leaderboardScrollWidget)
         leaderboardScrollLayout = QVBoxLayout(leaderboardScrollWidget)
         leaderboardScrollLayout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        leaderboardScrollLayout.setSpacing(15)
+        leaderboardScrollLayout.setSpacing(7)
 
         # Populate the leaderboard from CSV
         self.populateLeaderboard(leaderboardScrollLayout)
@@ -93,7 +100,7 @@ class LobbyScreen(QWidget):
                 background: solid;  /* Scroll bar background color */
                 border-radius: 3px;
                 width: 16px;  /* Width of the scroll bar */
-                padding: 7px 3px 7px 3px;    
+                padding: 7px 3px 7px 3px;   /* Padding of the scroll bar */
                 }
 
             QScrollBar::handle:vertical {
@@ -129,7 +136,7 @@ class LobbyScreen(QWidget):
         # Wrap the layout in a QWidget and apply the shadow effect to the widget
         leaderboardWrapper = QWidget()
         leaderboardWrapper.setFixedWidth(leaderboardScrollArea.width() + 20)
-        leaderboardWrapper.setFixedHeight(parent.height() - 175)
+        leaderboardWrapper.setFixedHeight(parent.height() - 155)
         leaderboardWrapper.setStyleSheet("border-radius: 10px; background-color: #c58af9;")
         leaderboardWrapper.setLayout(leaderboardLayout)
         leaderboardWrapper.setGraphicsEffect(shadow_effect)
@@ -153,7 +160,7 @@ class LobbyScreen(QWidget):
         self.nameInput.setFixedWidth(400)
         self.nameInput.setStyleSheet("background-color: #ffffff; color: #000; font-size: 26px; font-weight: bold; border-radius: 10px; height: 40px; padding-left: 10px;")
         self.nameInput.setPlaceholderText("Nom nom nom")
-        self.nameInput.setMaxLength(13)
+        self.nameInput.setMaxLength(14)
         self.nameInput.setFixedHeight(54)
 
         self.startButton = StartButton(self.startClimbing, self)
@@ -210,18 +217,24 @@ class LobbyScreen(QWidget):
         headers = lines[0].strip().split(',')
 
         # Extract data from each line and convert scores to integers
-        data_list = []
+        dataList = []
         for line in lines[1:]:
             data = line.strip().split(',')
-            data_list.append([data[0]] + [int(score) for score in data[1:]])
+            dataList.append([data[0]] + [int(score) for score in data[1:]])
 
         # Sort data by score in descending order
-        data_list.sort(key=itemgetter(1), reverse=True)
+        dataList.sort(key=itemgetter(1), reverse=True)\
+        
+        if len(dataList) > 20:
+            dataList = dataList[:20]
+            numWidgets = 20
+        else:
+            numWidgets = len(dataList)
 
         # Add up to 20 of the top-scoring climbs
-        for row, data in enumerate(data_list[:20]):
+        for row, data in enumerate(dataList):
             name, score = data[0], data[1]
-            leaderboardWidget = LeaderboardWidget(row + 1, name, score, self)
+            leaderboardWidget = LeaderboardWidget(row + 1, name, score, numWidgets, self) 
             layout.addWidget(leaderboardWidget)
 
     def updateStartButton(self):
@@ -245,6 +258,11 @@ class LobbyScreen(QWidget):
         # Add your logic to transition to the next screen or perform other actions
 
     getClimberName = lambda self: self.nameInput.text()
+
+    def reset(self):
+        self.nameInput.clear()
+        self.startButton.setDisabled(True)
+        self.startButton.setVisible(False)
 
 if __name__ == '__main__':
     import sys

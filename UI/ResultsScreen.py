@@ -207,6 +207,13 @@ class ResultsScreen(QWidget):
         Returns:
             str: the name of the lowest weighted submetric
         """
+
+    def reset(self):
+        self.climbFinishedLabel.setText(f"Hold on tight, {self.climberName}. \nWe're analysing your climb now...")
+        self.tipButton.setDisabled(True)
+        self.tipButton.setText("Click to see \nClimbing tip")
+        self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #8f8f8f; border: none; padding: 10px; border-radius: 20px;")
+        self.stackedLayout.setCurrentIndex(0)
         
 
 

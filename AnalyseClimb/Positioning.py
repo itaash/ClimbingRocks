@@ -204,6 +204,14 @@ def calculatePosition(climbData, holdsCoordinates):
     arm_angle_score = measure_arm_angle(climbing_data)
 
     combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
+    # if any of the scores are NaN, replace with -1
+    if np.isnan(combined_score):
+        combined_score = -1
+    if np.isnan(smoothness_score):
+        smoothness_score = -1
+    if np.isnan(arm_angle_score):
+        arm_angle_score = -1
+
     return [round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)]
 
 

@@ -208,6 +208,23 @@ class ClimbingScreen(QWidget):
             cv2.line(frame, (int(rightElbow[1] * frame.shape[1]), int(rightElbow[0] * frame.shape[0])), (int(rightWrist[1] * frame.shape[1]), int(rightWrist[0] * frame.shape[0])), (0, 255, 0), 2)
         
         return frame
+    
+    def reset(self):
+        self.keypoints = None
+        self.centerOfGravity = (None, None)
+        self.armAngles = (None, None)
+        self.statusLabel.setText("Start Climbing!")
+        self.statusLabel.setStyleSheet(
+            "background-color: #63D451;"  # green background
+            "color: #ffffff;"
+            "border-radius: 45px;"
+            "border: 10px solid #3FB42D;"  # darker green border
+            "font-size: 40px;"
+            "font-family: 'Bungee';"
+            "font-weight: bold;"
+        )
+        
+        self.poseEstimatorThread.reset()    
 
 
 @pyqtSlot()

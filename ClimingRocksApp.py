@@ -96,13 +96,15 @@ class MainWindow(QMainWindow):
         if self.holdFindingScreen is None:
             self.holdFindingScreen = HoldFindingScreen(self)
         self.currentClimber = self.lobbyScreen.getClimberName()
+        self.holdFindingScreen.cameraSender.frameSignal.connect(self.holdFindingScreen.updateLiveFeed)
+        self.lobbyScreen.reset()
         self.lobbyScreen.setParent(None)
         self.setCentralWidget(self.holdFindingScreen)
         self.holdFindingScreen.holdsFoundSignal.connect(self.goToClimbingScreen)
 
     def goToClimbingScreen(self):
         self.climbingScreen = ClimbingScreen(self)
-        self.holdFindingScreen.cameraSender.frameSignal.disconnect(self.holdFindingScreen.updateLiveFeed)
+        self.holdFindingScreen.reset()
         self.holdFindingScreen.setParent(None)
         self.setCentralWidget(self.climbingScreen)
         self.climbingScreen.cameraSender.frameSignal.connect(self.climbingScreen.onFrameSignal)
@@ -118,11 +120,13 @@ class MainWindow(QMainWindow):
         self.poseEstimatorThread.modelLoaded.connect(self.onPoseEstimatorModelLoaded)
         self.poseEstimatorThread.start()
 
-        
-        # Create force receiving thread - uncomment when force sensor is connected
-        self.forceReceivingThread = ForceReceivingThread(2, self)
-        # self.forceReceivingThread.connectedToArduino.connect()
-        self.forceReceivingThread.start()
+        try:
+            # Create force receiving thread - uncomment when force sensor is connected
+            self.forceReceivingThread = ForceReceivingThread(2, self)
+            # self.forceReceivingThread.connectedToArduino.connect()
+            self.forceReceivingThread.start()
+        except Exception as e:
+            print("Force sensor not connected, skipping force sensor setup")
 
     @pyqtSlot()
     def onPoseEstimatorModelLoaded(self):
@@ -154,9 +158,11 @@ class MainWindow(QMainWindow):
     @pyqtSlot(bool)
     def onClimbFinished(self, climbSuccessful):
         self.climbFinished = True
+        self.climbingScreen.cameraSender.frameSignal.disconnect(self.climbingScreen.onFrameSignal)
         self.resultsScreen = ResultsScreen(self.currentClimber, climbSuccessful, self)
         self.resultsScreen.timeoutSignal.connect(self.goToLobbyScreen)
         self.climbingScreen.setParent(None)
+        self.climbingScreen.reset()
         self.setCentralWidget(self.resultsScreen)
         pass
         
@@ -166,6 +172,7 @@ class MainWindow(QMainWindow):
 
     def goToLobbyScreen(self):
         self.resultsScreen.setParent(None)
+        self.resultsScreen.reset()
         self.setCentralWidget(self.lobbyScreen)
         
         pass

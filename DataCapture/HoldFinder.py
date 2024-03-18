@@ -55,6 +55,15 @@ class HoldFindingThread(QThread):
 
         self.loadModel()
 
+    def reset(self):
+        """
+        Resets all the variables to their initial state. Keeps the model loaded to save time on the next run.
+        
+        """
+
+        
+        
+
 
 class MainWindow(QWidget):
     """
