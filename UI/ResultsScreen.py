@@ -95,7 +95,7 @@ class ResultsScreen(QWidget):
         self.startTimer.start(1000)
 
     def startClimbAnalysis(self):
-        self.climbAnalyser = ClimbAnalyserThread(self.climberName, self)
+        self.climbAnalyser = ClimbAnalyserThread(self.climberName, self.climbSuccessful, self)
         self.climbAnalyser.ClimbAnalysisComplete.connect(self.updateMetrics)
         self.climbAnalyser.start()
 
@@ -195,18 +195,18 @@ class ResultsScreen(QWidget):
         self.climbFinishedLabel.setText(message)
 
 
-    def getLowestWeightedSubmetric(self, pressureSubmetrics, positioningSubmetrics, progressSubmetrics):
-        """
-        Get the lowest weighted submetric from the three submetric lists
+    # def getLowestWeightedSubmetric(self, pressureSubmetrics, positioningSubmetrics, progressSubmetrics):
+    #     """
+    #     Get the lowest weighted submetric from the three submetric lists
 
-        Args:
-            pressureSubmetrics (list): list of submetric scores for the pressure metric
-            positioningSubmetrics (list): list of submetric scores for the positioning metric
-            progressSubmetrics (list): list of submetric scores for the progress metric
+    #     Args:
+    #         pressureSubmetrics (list): list of submetric scores for the pressure metric
+    #         positioningSubmetrics (list): list of submetric scores for the positioning metric
+    #         progressSubmetrics (list): list of submetric scores for the progress metric
 
-        Returns:
-            str: the name of the lowest weighted submetric
-        """
+    #     Returns:
+    #         str: the name of the lowest weighted submetric
+    #     """
 
     def reset(self):
         self.climbFinishedLabel.setText(f"Hold on tight, {self.climberName}. \nWe're analysing your climb now...")
@@ -260,7 +260,7 @@ class MetricWidget(QWidget):
 
         # add the image
         self.image = QLabel()
-        self.image.setStyleSheet("background-color: #ffffff; border-radius: 15px")
+        self.image.setStyleSheet("background-color: #'transparent'; border-radius: 15px")
         # self.image.setPixmap(QPixmap(image).scaledToHeight(270, Qt.SmoothTransformation))
         self.image.setPixmap(QPixmap(image).scaledToWidth(300, Qt.SmoothTransformation))
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)

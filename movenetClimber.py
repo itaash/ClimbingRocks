@@ -299,8 +299,8 @@ def main():
 
             frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
             for usefulKeypoint in usefulKeypointDict.values():
-                frameRow.extend([round(keypoints[usefulKeypoint][0], 5), 
-                                 round(keypoints[usefulKeypoint][1], 5)])
+                frameRow.extend([round(keypoints[usefulKeypoint][1], 5), 
+                                 round(keypoints[usefulKeypoint][0], 5)])
             frameData.append(frameRow)
 
             print("Arm angles:\nLeft arm angle: " + str(leftArmAngle) + "\nRight arm angle: " + str(rightArmAngle))

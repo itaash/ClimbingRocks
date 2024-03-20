@@ -180,7 +180,7 @@ def calculate_combined_score(climbing_duration_score, hesitation_score, hold_sco
 
     
 
-def calculateProgress(climbData, holdsCoordinates):
+def calculateProgress(climbData, holdsCoordinates, climbSuccessful):
     threshold_distance = 10 # specify the threshold distance for proximity to the holds
 
     climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
@@ -203,7 +203,7 @@ def sum_left_right(result_left, result_right, holdsCoordinates):
     return total_hold_time
 
 
-def visualiseProgress(climbData, holdsCoordinates):
+def visualiseProgress(climbData, holdsCoordinates, climbSuccessful):
 
     threshold_distance = 10
     climbing_data = preprocess_data(climbData)
@@ -211,7 +211,7 @@ def visualiseProgress(climbData, holdsCoordinates):
     hesitation_score = calculate_hesitation_score(result_left, result_right)
 
     if 0<= hesitation_score < 20:
-        img = f"UI/UIAssets/position/progress20.png"
+        img = f"UI/UIAssets/progress/progress20.png"
     elif 20<= hesitation_score < 40:
         img = f"UI/UIAssets/progress/progress40.png"
     elif 40<= hesitation_score < 60:

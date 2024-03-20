@@ -140,8 +140,8 @@ class PoseEstimatorThread(QThread):
 
             frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
             for usefulKeypoint in PoseEstimatorThread.usefulKeypointDict.values():
-                frameRow.extend([round(self.keypoints[usefulKeypoint][0], 5), 
-                                 round(self.keypoints[usefulKeypoint][1], 5)])
+                frameRow.extend([round(self.keypoints[usefulKeypoint][1], 5), 
+                                 round(self.keypoints[usefulKeypoint][0], 5)])
             self.keypointsData.append(frameRow)
             # Check if both hands have been on or above the highest hold
             if (self.leftHand[0] < (self.highestHoldY+0.05)) and (self.rightHand[0] < (self.highestHoldY+0.05)):
@@ -326,13 +326,19 @@ class PoseEstimatorThread(QThread):
 
         # Check visibility before calculating angles
         if all(part[2] > threshold for part in [leftShoulder, leftElbow, leftWrist]):
-            leftArmAngle = math.degrees(math.atan2(leftWrist[1] - leftElbow[1], leftWrist[0] - leftElbow[0]) - math.atan2(leftShoulder[1] - leftElbow[1], leftShoulder[0] - leftElbow[0]))
+            leftArmAngle = math.degrees(math.atan2(leftShoulder[1] - leftElbow[1], leftShoulder[0] - leftElbow[0]) - math.atan2(leftWrist[1] - leftElbow[1], leftWrist[0] - leftElbow[0]))
+            if leftArmAngle>90:
+                leftArmAngle = abs(360-leftArmAngle)
             leftArmAngle = abs(round(leftArmAngle, 2))
             
 
         if all(part[2] > threshold for part in [rightShoulder, rightElbow, rightWrist]):
             rightArmAngle = math.degrees(math.atan2(rightWrist[1] - rightElbow[1], rightWrist[0] - rightElbow[0]) - math.atan2(rightShoulder[1] - rightElbow[1], rightShoulder[0] - rightElbow[0]))
+            if rightArmAngle>90:
+                rightArmAngle = abs(360-rightArmAngle)
             rightArmAngle = abs(round(rightArmAngle, 2))
+
+        print(leftArmAngle, rightArmAngle)
 
         return leftArmAngle, rightArmAngle
 
@@ -520,7 +526,7 @@ if __name__ == '__main__':
     from CameraSender import CameraSender
     from UI.ClimbingScreen import ClimbingScreen
     from UI.HoldFindingScreen import HoldFindingScreen
-
+    from error import *
 
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -530,3 +536,4 @@ else:
     from DataCapture.CameraSender import CameraSender
     from UI.ClimbingScreen import ClimbingScreen
     from UI.HoldFindingScreen import HoldFindingScreen
+    from error import *

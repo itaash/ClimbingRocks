@@ -20,9 +20,10 @@ class ClimbAnalyserThread(QThread):
                          "progress": [0.5, 0.5]
     }
 
-    def __init__(self, climberName, parent):
+    def __init__(self, climberName, climbSuccessful, parent):
         super().__init__(parent)
         self.climberName = climberName
+        self.climbSuccessful = climbSuccessful
         self.parent = parent
 
     def run(self):
@@ -64,8 +65,8 @@ class ClimbAnalyserThread(QThread):
         self.positionVisualisation = Positioning.visualisePosition(climbData, holdsCoordinates)
 
         # Calculate progress
-        self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates)
-        self.progressVisualisation = Progress.visualiseProgress(climbData, holdsCoordinates)
+        self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates, self.climbSuccessful)
+        self.progressVisualisation = Progress.visualiseProgress(climbData, holdsCoordinates, self.climbSuccessful)
 
         # calculte the lowest weighted submetric and get a climbing tip based on that submetric
         self.lowestWeightedSubmetric = self.findLowestWeightedSubmetric()
@@ -142,10 +143,13 @@ class ClimbAnalyserThread(QThread):
                     metricScoreList = self.pressureSubmetrics
                 else:
                         raise ValueError("Invalid metric name")
-                
-                weightedSubmetricScore = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)]*metricScoreList[ClimbAnalyserThread.submetricsLabels[metric].index(submetric)+1]
+                subMetricWeight = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)]
+                submetricScore = metricScoreList[ClimbAnalyserThread.submetricsLabels[metric].index(submetric)+1]
+                metricWeight = self.metricsWeights[metric]
+                weightedSubmetricScore = subMetricWeight*submetricScore*metricWeight
+                # print(metric, metricWeight, submetric, subMetricWeight, weightedSubmetricScore)
                 if weightedSubmetricScore < minScore:
-                    minScore = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)]
+                    minScore = weightedSubmetricScore
                     minSubmetric = submetric
         return minSubmetric
     
