@@ -5,7 +5,7 @@ def calculatePressure(climbData):
     """
     Calculates the pressure submetrics
     
-    Args:
+    Args: TESTESTETSETE
         climbData: list of strings, each string contains the data of a frame
     Returns:
         list of scores, each score represents a submetric
