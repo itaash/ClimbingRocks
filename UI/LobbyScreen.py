@@ -17,15 +17,20 @@ class LeaderboardWidget(QWidget):
 
         self.setFont(QFont("DM Sans"))
 
-        commonEdgeCornerRadius = 10
+        commonEdgeCornerRadius = 8
 
         # Create rounded rectangle background
         background = QLabel(self)
         background.setFixedSize(self.width(), self.height())
-        if position != 1 and position != numRows:
+
+
+        if position != 1 and position != numRows and numRows > 1:
             background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {commonEdgeCornerRadius}px; border-top-right-radius: {commonEdgeCornerRadius}px; border-bottom-left-radius: {commonEdgeCornerRadius}px; border-bottom-right-radius: {commonEdgeCornerRadius}px; opacity: 75;")
         elif position == 1:
-            background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {commonEdgeCornerRadius}px; border-bottom-right-radius: {commonEdgeCornerRadius}px; opacity: 75;")
+            if numRows != 1:
+                background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {commonEdgeCornerRadius}px; border-bottom-right-radius: {commonEdgeCornerRadius}px; opacity: 75;")
+            else:
+                background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {self.height()//2}px; border-top-right-radius: {self.height()//2}px; border-bottom-left-radius: {self.height()//2}px; border-bottom-right-radius: {self.height()//2}px; opacity: 75;")
         else:
             background.setStyleSheet(f"background-color: #222222; border-top-left-radius: {commonEdgeCornerRadius}px; border-top-right-radius: {commonEdgeCornerRadius}px; border-bottom-left-radius: {self.height()//2}px; border-bottom-right-radius: {self.height()//2}px; opacity: 75;")
 
@@ -42,7 +47,7 @@ class LeaderboardWidget(QWidget):
         scoreLabel.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
         scoreLabel.setFixedWidth(40)
         scoreLabel.setFixedHeight(40)
-        scoreLabel.setStyleSheet(f"background-color: '#dddddd'; color: #222222; font-weight: 500; line-height: 23px; border-radius: {scoreLabel.height()//2}; text-align: top;")
+        scoreLabel.setStyleSheet(f"background-color: '#dddddd'; color: #222222; font-weight: 500; line-height: 24px; border-radius: {scoreLabel.height()//2}; text-align: top;")
 
 
         # Create the layout for the widget

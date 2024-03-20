@@ -66,7 +66,7 @@ class HoldFindingScreen(QWidget):
         self.cameraSender = parent.cameraSender
         self.cameraSender.frameSignal.connect(self.updateLiveFeed)
 
-        self.cameraSender.cameraConnectSignal.connect(self.handleCameraConnection)
+        self.connectCameraSenderframeSignal()
 
         
         # flag to indicate if the holds have been found
@@ -81,7 +81,8 @@ class HoldFindingScreen(QWidget):
         else:
             self.holdFindingThread.holdFindingModelLoaded.connect(self.onHoldFindingModelLoaded)
 
-
+    def setObjectParent(self, parent):
+        self.parent = parent
 
     @pyqtSlot()
     def updateLiveFeed(self):
@@ -182,7 +183,6 @@ class HoldFindingScreen(QWidget):
             self.findHoldsTimer.start(2500)
             self.holdsTimerStarted = True
 
-
     @pyqtSlot()
     def onHoldFindingModelLoaded(self):
         """
@@ -196,8 +196,14 @@ class HoldFindingScreen(QWidget):
             self.findHoldsTimer.start(2500)
             self.holdsTimerStarted = True
 
+    def connectCameraSenderframeSignal(self):
+        self.cameraSender.frameSignal.connect(self.updateLiveFeed)
 
-
+    def disconnectCameraSenderframeSignal(self):
+        try:
+            self.cameraSender.frameSignal.disconnect(self.updateLiveFeed)
+        except TypeError:
+            print("CameraSender frameSignal not connected")
 
     @pyqtSlot()
     def findHolds(self):
@@ -390,7 +396,7 @@ class HoldFindingScreen(QWidget):
         self.holdsFound = False
         self.holdsTimerStarted = False
         self.clearAreaLabel.show()
-        self.cameraSender.frameSignal.disconnect(self.updateLiveFeed)
+        self.disconnectCameraSenderframeSignal()
 
         self.holdFindingThread.reset()
         # self.statusLabel.setFixedSize((self.parent.width()*2)//5, self.parent.height()//6) 

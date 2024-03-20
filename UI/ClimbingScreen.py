@@ -55,7 +55,7 @@ class ClimbingScreen(QWidget):
 
         # Connect signals
         self.cameraSender = parent.cameraSender
-        self.cameraSender.frameSignal.connect(self.onFrameSignal)
+        self.connectCameraSenderFrameSignal()
 
         self.poseEstimatorThread = parent.poseEstimatorThread
         if self.poseEstimatorThread.modelLoaded:
@@ -223,8 +223,19 @@ class ClimbingScreen(QWidget):
             "font-family: 'Bungee';"
             "font-weight: bold;"
         )
+
+        self.disconnectCameraSenderFrameSignal()
         
         self.poseEstimatorThread.reset()    
+
+    def connectCameraSenderFrameSignal(self):
+        self.cameraSender.frameSignal.connect(self.onFrameSignal)
+
+    def disconnectCameraSenderFrameSignal(self):    
+        try:
+            self.cameraSender.frameSignal.disconnect(self.onFrameSignal)
+        except TypeError:
+            print("Frame signal already disconnected")
 
 
 @pyqtSlot()
