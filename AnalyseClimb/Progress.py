@@ -190,9 +190,9 @@ def calculate_time_score(timeclimb):
 
 
 # Function to calculate combined score by averaging climbing duration score and hesitation score
-def calculate_combined_score(climbing_duration_score, hesitation_score, hold_score):
+def calculate_combined_score(hesitation_score, hold_score):
     
-    return (climbing_duration_score*0.3 + hesitation_score*0.3 + hold_score*0.4) 
+    return (hesitation_score*0.4 + hold_score*0.6) 
 
     
 
@@ -200,17 +200,22 @@ def calculateProgress(climbData, holdsCoordinates, climbSuccessful):
     threshold_distance = 10 # specify the threshold distance for proximity to the holds
 
     climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
-    result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
-    timeclimb = measure_climbing_duration(climbing_data)
 
-    hesitation_score = calculate_hesitation_score(result_left, result_right)
-    #hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
-    hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
-    climbing_duration_score = calculate_time_score(timeclimb)
+    if len(climbing_data) < 2:
+        return (0,0,0,0)
+    
+    else: 
+        result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
+        timeclimb = measure_climbing_duration(climbing_data)
 
-    combined_score = calculate_combined_score(climbing_duration_score, hesitation_score, hold_score)
-    print(combined_score, hold_score, climbing_duration_score, hesitation_score )
-    return [round(combined_score), round(hold_score), round(climbing_duration_score), round(hesitation_score)]
+        hesitation_score = calculate_hesitation_score(result_left, result_right)
+        #hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
+        hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
+        climbing_duration_score = calculate_time_score(timeclimb)
+
+        combined_score = calculate_combined_score(hesitation_score, hold_score)
+        print(combined_score, hold_score, climbing_duration_score, hesitation_score )
+        return [round(combined_score), round(hold_score), round(climbing_duration_score), round(hesitation_score)]
 
 def sum_left_right(result_left, result_right, holdsCoordinates):
 
@@ -221,25 +226,26 @@ def sum_left_right(result_left, result_right, holdsCoordinates):
 
 def visualiseProgress(climbData, holdsCoordinates, climbSuccessful):
 
-    threshold_distance = 10
     climbing_data = preprocess_data(climbData)
-    result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
-    #hesitation_score = calculate_hesitation_score(result_left, result_right)
 
-    hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
-
-    if climbSuccessful == True:
-        img = f"UI/UIAssets/progress/progress100.png"
-
-    elif 0 <= hold_score < 20:
+    if len(climbing_data) < 2:
         img = f"UI/UIAssets/progress/progress20.png"
-    elif 20 <= hold_score < 40:
-        img = f"UI/UIAssets/progress/progress40.png"
-    elif 40 <= hold_score < 60:
-        img = f"UI/UIAssets/progress/progress60.png"
-    elif 60 <= hold_score < 80:
-        img = f"UI/UIAssets/progress/progress80.png"
+        
     else:
-        img = f"UI/UIAssets/progress/progress100.png"
+        hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
+
+        if climbSuccessful == True:
+            img = f"UI/UIAssets/progress/progress100.png"
+
+        elif 0 <= hold_score < 20:
+            img = f"UI/UIAssets/progress/progress20.png"
+        elif 20 <= hold_score < 40:
+            img = f"UI/UIAssets/progress/progress40.png"
+        elif 40 <= hold_score < 60:
+            img = f"UI/UIAssets/progress/progress60.png"
+        elif 60 <= hold_score < 80:
+            img = f"UI/UIAssets/progress/progress80.png"
+        else:
+            img = f"UI/UIAssets/progress/progress100.png"
     
     return img

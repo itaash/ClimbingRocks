@@ -1,6 +1,10 @@
 import numpy as np
 import seaborn as sns
 
+def preprocess_data(df):
+    df.fillna(method='ffill', inplace=True)  # Fill NaN values in the DataFrame with last valid observation
+    return df
+
 def calculatePressure(climbData):
     """
     Calculates the pressure submetrics
@@ -15,21 +19,29 @@ def calculatePressure(climbData):
     return [100, 100, 100, 0, 0]
 
 def visualisePressure(climbData, progressSubmetrics):
-    """
-    Visualises the pressure submetrics
     
-    Args:
-        climbData: list of strings, each string contains the data of a frame
-        progressSubmetrics: list of scores, each score represents a submetric
-    Returns:
-        an image that visualises the progress submetrics
+    climbing_data = preprocess_data(climbData)
 
-    """
-    # TODO: implement this
-    # currently returns a black image as a placeholder for the visualisation so other parts of the app can be tested
+    if len(climbing_data) < 2:
+        img = f"UI/UIAssets/progress/progress20.png"
+    
+    else:
 
-    img1 = np.zeros((200, 200, 3), dtype=np.uint8)
-    img = "UI/UIAssets/pressure_placeholder.png"
+    #REplace will calling the strength score
+        
+        strength = 100
+
+        if 0 <= strength < 25:
+            img = f"UI/UIAssets/pressure/pressure20.png"
+        elif 25 <= strength < 50:
+            img = f"UI/UIAssets/pressure/pressure40.png"
+        elif 50 <= strength < 75:
+            img = f"UI/UIAssets/pressure/pressure60.png"
+        elif 75 <= strength:
+            img = f"UI/UIAssets/pressure/pressure80.png"
+        else:
+            img = f"UI/UIAssets/pressure/pressure80.png"
+
     return img
 
 

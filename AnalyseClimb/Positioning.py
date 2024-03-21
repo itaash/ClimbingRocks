@@ -146,7 +146,28 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance=2):
 
     return result_df_left, result_df_right
 
-def calculate_smoothness(climb_data, left_hand_df, right_hand_df):
+def centre_of_gravity(climb_data):
+    CoG_X = climb_data["Center of Gravity X"]
+    CoG_Y = climb_data["Center of Gravity Y"]
+
+    CoG_X_mean_difference = CoG_X.diff()
+    CoG_Y_mean_difference = CoG_Y.diff()
+
+    std_CoG_X = np.std(CoG_X)
+    std_CoG_Y = np.std(CoG_Y)
+
+    #smoothness = max(std_CoG_X, std_CoG_Y)*100
+
+    smoothness = 100 - max(np.mean(CoG_X_mean_difference), np.mean(CoG_Y_mean_difference))*10000
+    if smoothness < 0:
+        smoothness = 0
+
+
+    return round(smoothness, 2)
+
+    
+
+def calculate_smoothness_old(climb_data, left_hand_df, right_hand_df):
     # Merge the two DataFrames on 'Hold_Id'
     merged_df = pd.merge(left_hand_df, right_hand_df, on='Hold_Id', how='inner', suffixes=('_left', '_right'))
 
@@ -199,39 +220,48 @@ def calculate_smoothness(climb_data, left_hand_df, right_hand_df):
 def calculatePosition(climbData, holdsCoordinates):
     climbing_data = preprocess_data(climbData)  # Just do columns we need, not whole thing TO DO
     threshold_distance = 10 #THIS VALUE TO CHANGE WHEN WE START TESTING
-    result_dataframe_left, result_dataframe_right = calculate_time_on_holds(climbData, holdsCoordinates, threshold_distance)
-    smoothness_score = calculate_smoothness(climbing_data, result_dataframe_left, result_dataframe_right)
-    arm_angle_score = measure_arm_angle(climbing_data)
 
-    combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
-    # if any of the scores are NaN, replace with -1
-    if np.isnan(combined_score):
-        combined_score = -1
-    if np.isnan(smoothness_score):
-        smoothness_score = -1
-    if np.isnan(arm_angle_score):
-        arm_angle_score = -1
+    if len(climbing_data) < 2:
+        return (0,0,0,0)
+    
+    else: 
+        result_dataframe_left, result_dataframe_right = calculate_time_on_holds(climbData, holdsCoordinates, threshold_distance)
+        #smoothness_score = calculate_smoothness_old(climbing_data, result_dataframe_left, result_dataframe_right)
+        smoothness_score = centre_of_gravity(climbing_data)
+        arm_angle_score = measure_arm_angle(climbing_data)
 
-    return [round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)]
+        combined_score = (smoothness_score + arm_angle_score) / 2  # Calculate average of the two scores
+        # if any of the scores are NaN, replace with -1
+        if np.isnan(combined_score):
+            combined_score = -1
+        if np.isnan(smoothness_score):
+            smoothness_score = -1
+        if np.isnan(arm_angle_score):
+            arm_angle_score = -1
+
+        return [round(combined_score), round(smoothness_score, 2), round(arm_angle_score, 2)]
 
 
-def visualisePosition(climbData, holdsCoordinates):
-    # Create a DataFrame
-    #threshold = 5 #VALUE TO BE CHANGED WHEN TESTING
-    #data = {'Time': climbData['Timestamp(ms)'], 'Values': climbData['Center of Gravity X']}
+def visualisePosition(climbData):
+
     climbing_data = preprocess_data(climbData)
-    arm_score = measure_arm_angle(climbing_data)
-
-    if 0<= arm_score < 20:
+    
+    if len(climbing_data) < 2:
         img = f"UI/UIAssets/position/Position_0_30.png"
-    elif 20<= arm_score < 40:
-        img = f"UI/UIAssets/position/Position_30_60.png"
-    elif 40<= arm_score < 60:
-        img = f"UI/UIAssets/position/Position_60_90.png"
-    elif 60<= arm_score < 80:
-        img = f"UI/UIAssets/position/Position_105_135.png"
+
     else:
-        img = f"UI/UIAssets/position/Position_135_165.png"
+        arm_score = measure_arm_angle(climbing_data)
+            
+        if 0<= arm_score < 20:
+            img = f"UI/UIAssets/position/Position_0_30.png"
+        elif 20<= arm_score < 40:
+            img = f"UI/UIAssets/position/Position_30_60.png"
+        elif 40<= arm_score < 60:
+            img = f"UI/UIAssets/position/Position_60_90.png"
+        elif 60<= arm_score < 80:
+            img = f"UI/UIAssets/position/Position_105_135.png"
+        else:
+            img = f"UI/UIAssets/position/Position_135_165.png"
 
     return img
 

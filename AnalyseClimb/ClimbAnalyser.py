@@ -62,7 +62,7 @@ class ClimbAnalyserThread(QThread):
 
         # Calculate positioning
         self.positionSubmetrics = Positioning.calculatePosition(climbData, holdsCoordinates)
-        self.positionVisualisation = Positioning.visualisePosition(climbData, holdsCoordinates)
+        self.positionVisualisation = Positioning.visualisePosition(climbData)
 
         # Calculate progress
         self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates, self.climbSuccessful)
@@ -119,7 +119,7 @@ class ClimbAnalyserThread(QThread):
 
             climbingTip = random.choice(climbingTipsforSubmetric)
         except:
-            climbingTip = "Could not find a tip for the submetric " + submetric + ". \n Please contact the developers for help."
+            climbingTip = "Could not find a tip for the submetric " + submetric + ".\nPlease contact the developers for help."
 
         return climbingTip
 

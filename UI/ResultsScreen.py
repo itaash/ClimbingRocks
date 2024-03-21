@@ -307,7 +307,7 @@ class MetricWidget(QWidget):
         #decode the image
         imagePixmap = QPixmap(image)
         #imagePixmap = QPixmap.fromImage(QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888))
-        self.image.setPixmap(imagePixmap.scaledToHeight(200, Qt.SmoothTransformation))
+        self.image.setPixmap(imagePixmap.scaledToHeight(250, Qt.SmoothTransformation))
 
     def updateScore(self, scoreList):
         self.scoreLabel.setText(str(round(scoreList[0])))
