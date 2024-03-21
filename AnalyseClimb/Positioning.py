@@ -45,11 +45,11 @@ def measure_arm_angle(data):
     #low_angle_proportion = num_low_angles / num_samples if num_samples > 0 else 0
 
     # Assign score based on the proportion of low arm angles
-    score = (np.mean(data["Left Arm Angle"]) + np.mean(data["Right Arm Angle"]))/2
+    score = min(np.mean(data["Left Arm Angle"]),np.mean(data["Right Arm Angle"]))
 
-    if score >= 170:
+    if score >= 180:
         score = 100
-    elif 170 > score:
+    elif 180 > score:
         score = score/180*100
     
     return round(score, 2)

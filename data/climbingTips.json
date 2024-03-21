@@ -9,7 +9,7 @@
       "SmoothTransitions": "No",
       "QuickDecisionMaking": "No"
     },
-    "Hesitation": {
+    "Path Finding": {
       "TrustGripStrength": "Great effort! Trust your grip strength and commit to each move confidently. This will save energy!",
       "VisualizeSequence": "Nice climb! Work on transitioning smoothly between holds to maintain a consistent pace throughout the climb.",
       "PacingStrategy": "Good work! Practice quick decision-making to choose the most effective handholds without hesitation"

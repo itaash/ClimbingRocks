@@ -12,12 +12,12 @@ class ClimbAnalyserThread(QThread):
 
     submetricsLabels = {"pressure": ["Strength", "Adjustments"],
                         "positioning": ["Smoothness", "Arm Bend"],
-                        "progress": ["Completion", "Hesitation"]
+                        "progress": ["Completion", "Path Finding"]
     }
 
     submetricsWeights = {"pressure": [0.5, 0.5],
                          "positioning": [0.5, 0.5],
-                         "progress": [0.5, 0.5]
+                         "progress": [0.7, 0.3]
     }
 
     def __init__(self, climberName, climbSuccessful, parent):
