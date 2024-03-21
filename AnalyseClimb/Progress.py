@@ -155,7 +155,7 @@ def calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful):
 
 def calculate_hesitation_score(results_left, results_right):
 
-    error_factor = 1  # TO BE CHANGED WHEN TESTING
+    error_factor = 2  # TO BE CHANGED WHEN TESTING
 
     # Calculate the average time spent on each hold for left hand
     results_left['Average_Time_Left(ms)'] = results_left['Total_Time_Left(ms)'] / (results_left['End_Timestamp_Left(ms)'] - results_left['Start_Timestamp_Left(ms)'])
@@ -230,7 +230,7 @@ def visualiseProgress(climbData, holdsCoordinates, climbSuccessful):
 
     if len(climbing_data) < 2:
         img = f"UI/UIAssets/progress/progress20.png"
-        
+
     else:
         hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
 

@@ -161,6 +161,8 @@ def centre_of_gravity(climb_data):
     smoothness = 100 - max(np.mean(CoG_X_mean_difference), np.mean(CoG_Y_mean_difference))*10000
     if smoothness < 0:
         smoothness = 0
+    elif smoothness > 100:
+        smoothness = 98
 
 
     return round(smoothness, 2)
@@ -245,7 +247,7 @@ def calculatePosition(climbData, holdsCoordinates):
 def visualisePosition(climbData):
 
     climbing_data = preprocess_data(climbData)
-    
+
     if len(climbing_data) < 2:
         img = f"UI/UIAssets/position/Position_0_30.png"
 

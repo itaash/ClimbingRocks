@@ -144,7 +144,7 @@ class PoseEstimatorThread(QThread):
                                  round(self.keypoints[usefulKeypoint][0], 5)])
             self.keypointsData.append(frameRow)
             # Check if both hands have been on or above the highest hold
-            if (self.leftHand[0] < (self.highestHoldY+0.05)) and (self.rightHand[0] < (self.highestHoldY+0.05)):
+            if (self.leftHand[0] < (self.highestHoldY-0.05) and (self.rightHand[0] < (self.highestHoldY-0.05))):
                 self.climbSuccessful = True # Climber has reached the top
                 self.climbInProgress = False
                 self.climbInProgressSignal.emit(self.climbInProgress)
