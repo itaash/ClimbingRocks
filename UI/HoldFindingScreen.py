@@ -217,14 +217,13 @@ class HoldFindingScreen(QWidget):
         # Add any additional logic or transitions here
 
     def findHoldsFunction(self, frame):
-        # Placeholder for the FindHolds function
-        # Implement your logic to find holds in the frame
         # modify minScore and numHolds to change the number of holds detected
         print("Finding Holds...")
         self.detections = self.holdFindingThread.runInference(frame)
         minScore = 0.1
         numHolds = 10
         frameWithHolds = self.holdFindingThread.getImageWithHoldsVolumes(frame, self.detections, minScore) # expects a numpy array
+        
         # Convert image to QImage
         height, width, channel = frameWithHolds.shape
         bytesPerLine = 3 * width
@@ -234,7 +233,7 @@ class HoldFindingScreen(QWidget):
         # self.getImageWithHoldsVolumes(frame, self.detections, minScore)
         if self.detections is not None:
             self.holdsFound = True
-            self.holdFindingThread.saveDetections(self.detections, maxHolds=numHolds, threshold=minScore)
+            self.holdFindingThread.saveDetections(self.detections, frame, maxHolds=numHolds, threshold=minScore)
             QTimer.singleShot(3000, self.holdsFoundSignal.emit)
     
     def reset(self):
@@ -256,7 +255,7 @@ if __name__ == '__main__':
 
     sys.path.append('C:/Users/itaas/Documents/UBC/Year 4 (2023-2024)/IGEN 430/ClimbingRocks')
     from DataCapture.CameraSender import CameraSender
-    from DataCapture.HoldFinder import HoldFindingThread
+    from DataCapture.CircularHoldFinder import HoldFindingThread
     from error import HoldModelError, CameraNotFoundError, FontError
     from PyQt5.QtGui import QFontDatabase, QFont
 
@@ -282,15 +281,16 @@ if __name__ == '__main__':
 
     # Create the hold finding thread
     window.holdFindingThread = HoldFindingThread(window)
-    window.holdFindingThread.start()
 
     # Create the hold finding screen
     holdFindingScreen = HoldFindingScreen(window)
+
     window.setCentralWidget(holdFindingScreen)
+    window.holdFindingThread.start()
 
     # Show the window and run the app
     window.show()
     sys.exit(app.exec_())
 else:
-    from DataCapture.HoldFinder import HoldFindingThread
+    from DataCapture.CircularHoldFinder import HoldFindingThread
     from DataCapture.CameraSender import CameraSender

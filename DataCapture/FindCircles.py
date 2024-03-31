@@ -13,10 +13,10 @@ minRadius	- Increases the minimum circle radius to consider.<br>- Ignores smalle
 maxRadius	- Increases the maximum circle radius to consider.<br>- Ignores larger circles, reducing false positives but may miss larger objects.
 """
 
-def detect_circles(image):
+def detect_circles(frame):
     
-    # Convert image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Convert frame to grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # Apply Gaussian blur to reduce noise
     blurred = cv2.GaussianBlur(gray, (9, 9), 2)
@@ -30,12 +30,11 @@ def detect_circles(image):
 
         # Draw detected circles
         for (x, y, r) in circles:
-            cv2.circle(image, (x, y), r, (0, 255, 0), 4)
+            cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
+            textPos = (x+round(0.5*r), y-(round(1*r))) if y > frame.shape[0]//2 else (x+round(0.5*r), y+(round(2*r)))
+            cv2.putText(frame, f'Hold', textPos, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-
-        
-
-    return image
+    return frame
 
 def main():
     # Open webcam

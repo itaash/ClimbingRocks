@@ -1,4 +1,4 @@
-import cv2, time
+import cv2, time, csv
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, Qt, QTimer
 from PyQt5.QtGui import QImage, QPixmap
@@ -23,12 +23,16 @@ class HoldFindingThread(QThread):
         print('Circle finding model was already loaded lol - its just cv2')
         self.holdFindingModelLoaded.emit()
 
-    def runInference(self, frame):
+    def runInference(self, frame) -> np.ndarray:
         """
         Runs inference on the given frame.
         
         Args:
             frame: The frame to run inference on.
+
+        Returns:
+            A numpy array of the detections, in the format [x, y, r], from the Hough Circle Transform output.
+
         """
         # Convert image to grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -36,12 +40,59 @@ class HoldFindingThread(QThread):
         # Apply Gaussian blur to reduce noise
         blurred = cv2.GaussianBlur(gray, (9, 9), 2)
 
+        
+        # Hough Circle Transform is used to detect circles in an image. It is a popular technique for circle detection because it is simple and effective.
+        # Below are the effects of increasing the parameters of the Hough Circle Transform:
+        
+        # dp	- Decreases the accumulator resolution. More precise detection but slower computation.
+        # minDist	- Increases the minimum distance between detected circles. Reduces false positives but may miss closely spaced circles.
+        # param1	- Increases the gradient value threshold. Reduces false positives but may miss faint circles.
+        # param2	- Decreases the circle center threshold. More circles detected but also increases false positives.
+        # minRadius	- Increases the minimum circle radius to consider. Ignores smaller circles, reducing false positives but may miss smaller objects.
+        # maxRadius	- Increases the maximum circle radius to consider. Ignores larger circles, reducing false positives but may miss larger objects.
+
         circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=30,
-                            param1=125, param2=19, minRadius=8, maxRadius=25)
-        numDetections = circles.shape[1] if circles is not None else 0  # Number of circles detected
+                                    param1=125, param2=19, minRadius=8, maxRadius=25)
+        
         print('HoldFinder done!')
         return circles
+    
+    def saveDetections(self, detections, frame, maxHolds=20, threshold=0.3, path = 'data/holdCoordinates.csv'):
+        """
+        Saves the locations of the detected holds to a file.  Holds are saved in the format ["holdNumber", "left", "right", "top", "bottom"], sorted by distance of the center of the hold from the bottom of the frame.
+
+        Args:
+            detections: The detections to save. Expected to be in the format [x, y, r], from the Hough Circle Transform output.
+            frame: The frame the detections were made on.
+            maxHolds: The maximum number of holds to save. Default is 20.
+            threshold: The minimum threshold for the detection score. Default is 0.3.
+            path: The path to save the detections to. Default is 'data/holdCoordinates.csv'.
+        """
+        if detections is None:
+            return
         
+        detections = detections[0]
+
+        print("Unsorted detections: \n", detections)
+        # Sort the detections by distance of the center of the hold from the bottom of the frame
+        detections = sorted(detections, key=lambda y: y[[1]], reverse=True)
+        print("Sorted detections: \n", detections)
+
+        holdsSaved = 0
+        with open(path, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(["holdNumber", "left", "right", "top", "bottom"])
+            for i, (x, y, r) in enumerate(detections):
+                if holdsSaved >= maxHolds:
+                    break
+                
+                if y > threshold * frame.shape[0]:
+                    writer.writerow([holdsSaved,
+                                     round((x-r)/frame.shape[1], 2), 
+                                     round((x+r)/frame.shape[1], 2), 
+                                     round((y-r)/frame.shape[0], 2), 
+                                     round((y+r)/frame.shape[0], 2)])
+                    holdsSaved += 1
 
     def loadImageIntoNumpyArray(self, path):
         """
@@ -60,14 +111,29 @@ class HoldFindingThread(QThread):
         
         """
 
-    def getImageWithHoldsVolumes(self, frame, circles, threshold=0.3, left=0.25, right=0.75):
+    def getImageWithHoldsVolumes(self, frame, circles, threshold=0.3, left=0.25, right=0.75) -> np.ndarray:
+        """
+        Draws the detected circles on the given frame.
+
+        Args:
+            frame: The frame to draw the circles on.
+            circles: The circles to draw.
+            threshold: The minimum threshold for the detection score.
+            left: The left boundary for the circles to be drawn.
+            right: The right boundary for the circles to be drawn.
+
+        Returns:
+            The frame with the detected circles drawn on it, if any.
+        """
         if circles is not None:
-            circles = np.round(circles[0, :]).astype("int")
+            circles = np.round(circles[0, :]).astype("int") # Convert to int for drawing
 
         # Draw detected circles
         for (x, y, r) in circles:
-            if x > left * frame.shape[1] and x < right * frame.shape[1]:
+            if x > (left * frame.shape[1]) and x < (right * frame.shape[1]):
                 cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
+                textPos = (x+round(0.5*r), y-(round(1*r))) if y > frame.shape[0]//2 else (x+round(0.5*r), y+(round(2*r)))
+                cv2.putText(frame, f'Hold', textPos, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
         return frame
         

@@ -91,7 +91,7 @@ class HoldFindingThread(QThread):
         
         return frame
     
-    def saveDetections(self, detections, maxHolds=20, threshold=0.3):
+    def saveDetections(self, detections, frame, maxHolds=20, threshold=0.3, path='data/holdCoordinates.csv'):
         """
         Save the locations of the detected holds to a file
 
@@ -99,6 +99,7 @@ class HoldFindingThread(QThread):
             detections: The output of the hold finding model
             maxHolds: The maximum number of holds to save
             threshold: The minimum score threshold for a hold to be saved
+            path: The path to save the coordinates of the detected holds. 
 
         """
         if detections is not None:
@@ -118,7 +119,7 @@ class HoldFindingThread(QThread):
             # Create a list to store the coordinates of the detected holds
             holdCoordinates = []
 
-            # Create a counter to keep track of the number of holds being saved
+            # Create a counter to keep track of the number of holds being saved. 2  for loops because we want to save the top 20 holds
             i = 0
             # Iterate through the detected holds
             while i < min(maxHolds, len(boxes)):
@@ -140,7 +141,7 @@ class HoldFindingThread(QThread):
             print(holdCoordinates) # for debugging
 
             # Save the coordinates of the detected holds to a file
-            with open('data/holdCoordinates.csv', 'w', newline='') as f:
+            with open(path, 'w', newline='') as f:
                 writer = csv.writer(f)
                 # Iterate through the coordinates of the detected holds
                 print("Saving coordinates of", len(holdCoordinates), "holds")
