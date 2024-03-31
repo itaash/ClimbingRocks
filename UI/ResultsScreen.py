@@ -92,7 +92,7 @@ class ResultsScreen(QWidget):
         self.startTimer = QTimer(self)
         self.startTimer.setSingleShot(True)
         self.startTimer.timeout.connect(self.startClimbAnalysis)
-        self.startTimer.start(1000)
+        self.startTimer.start(4000)
 
     def startClimbAnalysis(self):
         self.climbAnalyser = ClimbAnalyserThread(self.climberName, self.climbSuccessful, self)
@@ -128,25 +128,11 @@ class ResultsScreen(QWidget):
         """
 
         overallScoreStr = str(self.climbAnalyser.getClimbingScore())
-        
-        # if self.climbSuccessful:
-        #     message = f"\t Congratulations, {self.climberName}, you scored <span style='font-size: 34px; color: #FF66B2;'>{overallScoreStr}</span>! \nHere's why:"
-        # else:
-        #     message = f"\t Skill issue, {self.climberName}, you scored <span style='font-size: 34px; color: #FF66B2;'>{overallScoreStr}</span>! \nTake notes:"
 
-        if self.climbSuccessful:
-            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
-                        "Here's why:"
-        else:
-            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
-                        "Take notes:"
-
-
-        self.climbFinishedLabel.setText(message)
+        self.setSuccessfulClimb(overallScoreStr)
 
         self.tipButton.setStyleSheet("font-size: 24px; color: #ffffff; font-weight: bold; font-family: 'DM Sans'; background-color: #14904d; border: none; padding: 10px; border-radius: 20px;")
         self.tipButton.setDisabled(False)
-        # self.tipButton.setVisible(True)
         
         pressureSubmetrics = self.climbAnalyser.getPressureSubmetrics()
         pressureVisualisation = self.climbAnalyser.getPressureVisualisation()
@@ -179,17 +165,14 @@ class ResultsScreen(QWidget):
     def setCurrentClimber(self, climberName):
         self.climberName = climberName
 
-    def setSuccessfulClimb(self, successful):
-        overallScoreStr = str(self.climbAnalyser.getClimbingScore())
-
-        self.climbSuccessful = successful
+    def setSuccessfulClimb(self, overallScoreStr):
 
         if self.climbSuccessful:
-            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
-                        "Here's why:"
+            message = f"Congratulations, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
+                        "Here's an analysis:"
         else:
-            message = f"Skill issue, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br><br>"\
-                        "Take notes:"
+            message = f"Good try, {self.climberName}, you scored <span style='color: #FF66B2;'>{overallScoreStr}</span>/100!<br>"\
+                        "Here's a breakdown:"
 
 
         self.climbFinishedLabel.setText(message)
@@ -260,7 +243,7 @@ class MetricWidget(QWidget):
 
         # add the image
         self.image = QLabel()
-        self.image.setStyleSheet("background-color: #'transparent'; border-radius: 15px")
+        self.image.setStyleSheet("background-color: 'transparent'; border-radius: 15px")
         # self.image.setPixmap(QPixmap(image).scaledToHeight(270, Qt.SmoothTransformation))
         self.image.setPixmap(QPixmap(image).scaledToWidth(300, Qt.SmoothTransformation))
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)

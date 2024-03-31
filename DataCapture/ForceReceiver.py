@@ -40,6 +40,7 @@ class ForceReceivingThread(QThread):
             print("Error connecting to Arduino: ", e)
             self.connected = False
             self.connectedToArduino.emit(self.connected)
+            self.deleteLater()
             raise e
     
 

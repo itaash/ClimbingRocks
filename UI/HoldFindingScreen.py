@@ -193,7 +193,7 @@ class HoldFindingScreen(QWidget):
             self.findHoldsTimer = QTimer(self)
             self.findHoldsTimer.setSingleShot(True)
             self.findHoldsTimer.timeout.connect(self.findHolds)
-            self.findHoldsTimer.start(2500)
+            self.findHoldsTimer.start(3000)
             self.holdsTimerStarted = True
 
     def connectCameraSenderframeSignal(self):
@@ -224,172 +224,18 @@ class HoldFindingScreen(QWidget):
         self.detections = self.holdFindingThread.runInference(frame)
         minScore = 0.1
         numHolds = 10
-        self.framePixmapWithHolds = self.getImageWithHoldsVolumes(frame, self.detections, minScore)
-        if self.detections is not None:
-            self.holdsFound = True
-            self.saveDetections(frame, maxHolds=numHolds, threshold=minScore)
-            QTimer.singleShot(3000, self.holdsFoundSignal.emit)
-    
-    
-    def saveDetections(self, frame, maxHolds = 10, threshold = 0.3):
-        """
-        # Save the locations of the detected holds to a file
-
-        # Args:
-        #     frame: The frame that the holds were detected in
-        #     maxHolds: The maximum number of holds to save
-        #     threshold: The minimum score threshold for a hold to be saved
-
-        """
-        if self.detections is not None:
-            # Drop detections of volumes (class 2)
-
-            # investigate why this doesn't work
-            filteredDetectionswithHolds = self.filterResultsforHolds(self.detections, threshold)
-            filteredDetectionswithHoldsInCenterHalf = self.filterResultsforCenterHalf(filteredDetectionswithHolds, leftBound=0.25, rightBound=0.75)
-            sortedDetections = self.sortDetectionsbyScore(filteredDetectionswithHoldsInCenterHalf)
-
-
-            # Get the coordinates of the detected holds(class 1), not volumes (class 2)
-            boxes = sortedDetections['detection_boxes']
-            # Get the scores of the detected holds
-            scores = sortedDetections['detection_scores']
-            # Get the classes of the detected holds
-            classes = sortedDetections['detection_classes']
-
-            # Get the width and height of the frame
-            height, width, channel = frame.shape
-
-            # Create a list to store the coordinates of the detected holds
-            holdCoordinates = []
-
-            # Create a counter to keep track of the number of holds being saved
-            i = 0
-            # Iterate through the detected holds
-            while i < min(maxHolds, len(boxes)):
-                # If the score of the hold is above the threshold
-                if classes[i] == 1 and scores[i] > threshold:
-                    # Get the coordinates of the hold
-                    ymin, xmin, ymax, xmax = boxes[i]
-                    # Convert the coordinates from normalized to pixel coordinates
-                    ## currently trying to use normalized coordinates for analysis, otherwise would use pixel coordinates
-                    left, right, top, bottom = round(xmin, 4), round(xmax, 4), round(ymin, 4), round(ymax, 4)
-                    holdCoordinates.append((left, right, top, bottom))
-                    i += 1
-
-            
-            # Sort the coordinates of the detected holds by their ymax coordinate(column 3) in descending order
-            # The hold coordinates are stored as a list of lists, where each sublist contains the xmin, xmax, ymin, and ymax coordinates of a hold
-            holdCoordinates = sorted(holdCoordinates, key=lambda x: x[3], reverse=True)
-
-            print(holdCoordinates) # for debugging
-
-            # Save the coordinates of the detected holds to a file
-            with open('data/holdCoordinates.csv', 'w', newline='') as f:
-                writer = csv.writer(f)
-                # Iterate through the coordinates of the detected holds
-                print("Saving coordinates of", len(holdCoordinates), "holds")
-                header = ["holdNumber", "left", "right", "top", "bottom"]
-                writer.writerow(header)
-                for i, (left, right, top, bottom) in enumerate(holdCoordinates):
-                    # Write the coordinates to the file
-                    writer.writerow([i, left, right, top, bottom])
-    
-    def filterResultsforHolds(self, output, threshold=0.3):
-        """
-        Filter the results of the hold finding model to only include holds, not volumes
-
-        Args:
-            output: The output of the hold finding model
-            threshold: The minimum confidence threshold for a detection to be included. Default is 0.3
-
-        Returns:
-            filteredResults: The filtered results of the hold finding model that only include holds, not volumes
-        """
-        scores = np.array(output['detection_scores'])
-        classes = np.array(output['detection_classes'])
-        mask = (scores >= threshold) & (classes == 1)
-
-        filteredResults = {
-            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[mask],
-            'detection_boxes': np.array(output['detection_boxes'])[mask],
-            'detection_classes': classes[mask],
-            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[mask],
-            'detection_scores': scores[mask]
-        }
-
-        return filteredResults
-        
-    def filterResultsforCenterHalf(self, output, leftBound=0.25, rightBound=0.75):
-        """
-        Filter the results of the hold finding model to only include holds in the center half of the frame
-        
-        Args:
-            output: The output of the hold finding model
-            leftBound: The left bound of the center chunk of the frame to include. Default is 0.25
-            rightBound: The right bound of the center half of the frame to include. Default is 0.75
-
-        Returns:
-            filteredResults: The filtered results of the hold finding model that only include holds in the center half of the frame
-        """
-
-        mask = (np.array(output['detection_boxes'])[:, 1] >= leftBound) & (np.array(output['detection_boxes'])[:, 1] <= rightBound)
-
-        filteredResults = {
-            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[mask],
-            'detection_boxes': np.array(output['detection_boxes'])[mask],
-            'detection_classes': np.array(output['detection_classes'])[mask],
-            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[mask],
-            'detection_scores': np.array(output['detection_scores'])[mask]
-        }
-
-        return filteredResults
-        
-    def sortDetectionsbyScore(self, output):
-        """
-        Sort the results of the hold finding model by their score in descending order. The highest scoring detection will be first in the list so that the highest scoring holds are saved based on the maxHolds parameter in saveDetections.
-
-        Args:
-            output: The output of the hold finding model
-
-        Returns:
-            sortedResults: The sorted results of the hold finding model
-        """
-
-        sortedIndices = np.argsort(output['detection_scores'])[::-1]
-
-        sortedResults = {
-            'detection_anchor_indices': np.array(output['detection_anchor_indices'])[sortedIndices],
-            'detection_boxes': np.array(output['detection_boxes'])[sortedIndices],
-            'detection_classes': np.array(output['detection_classes'])[sortedIndices],
-            'detection_multiclass_scores': np.array(output['detection_multiclass_scores'])[sortedIndices],
-            'detection_scores': np.array(output['detection_scores'])[sortedIndices]
-        }
-
-        return sortedResults
-
-        
-    def getImageWithHoldsVolumes(self, frame, detections, threshold=0.3):
-        viz_utils.visualize_boxes_and_labels_on_image_array(
-            frame,
-            detections['detection_boxes'],
-            detections['detection_classes'],
-            detections['detection_scores'],
-            label_map_util.create_category_index_from_labelmap(
-                'models/HoldModel/hold-detection_label_map.pbtxt', use_display_name=True),
-            use_normalized_coordinates=True,
-            max_boxes_to_draw=20,
-            min_score_thresh=threshold,
-            agnostic_mode=False,
-            skip_scores=False)
-
+        frameWithHolds = self.holdFindingThread.getImageWithHoldsVolumes(frame, self.detections, minScore) # expects a numpy array
         # Convert image to QImage
-        height, width, channel = frame.shape
+        height, width, channel = frameWithHolds.shape
         bytesPerLine = 3 * width
         qImage = QImage(frame.data, width, height, bytesPerLine, QImage.Format_BGR888)
-        pixmap = QPixmap(qImage)
-
-        return pixmap
+        self.framePixmapWithHolds = QPixmap(qImage)
+        
+        # self.getImageWithHoldsVolumes(frame, self.detections, minScore)
+        if self.detections is not None:
+            self.holdsFound = True
+            self.holdFindingThread.saveDetections(self.detections, maxHolds=numHolds, threshold=minScore)
+            QTimer.singleShot(3000, self.holdsFoundSignal.emit)
     
     def reset(self):
         self.visible = False

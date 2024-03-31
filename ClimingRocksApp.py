@@ -1,10 +1,14 @@
 
+"""
+Main application file for the Climbing Rocks application. This file is responsible for creating the main window and managing the flow of the application.
+"""
+# Standard library imports
 import sys, os, time, cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QThread, QRect
 from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QImage, QIcon
 
-
+# Custom library imports
 from UI.SplashScreen import SplashScreen
 from UI.LobbyScreen import LobbyScreen
 from UI.HoldFindingScreen import HoldFindingScreen
@@ -29,7 +33,8 @@ class MainWindow(QMainWindow):
 
         # Variables
         self.currentClimber = ""
-        self.numHolds = 10
+        self.numHolds = 9
+        self.numForceSensors = 9
         self.poseEstimationModel = "lightning"
 
         # flags
@@ -125,7 +130,8 @@ class MainWindow(QMainWindow):
 
         try:
             # Create force receiving thread - uncomment when force sensor is connected
-            self.forceReceivingThread = ForceReceivingThread(2, self)
+            # 
+            self.forceReceivingThread = ForceReceivingThread(self.numForceSensors, self)
             # self.forceReceivingThread.connectedToArduino.connect()
             self.forceReceivingThread.start()
         except Exception as e:
