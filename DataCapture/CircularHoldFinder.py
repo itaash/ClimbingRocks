@@ -73,13 +73,11 @@ class HoldFindingThread(QThread):
         
         detections = detections[0]
 
-        print("Unsorted detections: \n", detections)
         # Sort the detections by distance of the center of the hold from the bottom of the frame
         detections = sorted(detections, key=lambda y: y[[1]], reverse=True)
-        print("Sorted detections: \n", detections)
 
         holdsSaved = 0
-        with open(path, 'w') as f:
+        with open(path, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(["holdNumber", "left", "right", "top", "bottom"])
             for i, (x, y, r) in enumerate(detections):
@@ -88,11 +86,13 @@ class HoldFindingThread(QThread):
                 
                 if y > threshold * frame.shape[0]:
                     writer.writerow([holdsSaved,
-                                     round((x-r)/frame.shape[1], 2), 
-                                     round((x+r)/frame.shape[1], 2), 
-                                     round((y-r)/frame.shape[0], 2), 
-                                     round((y+r)/frame.shape[0], 2)])
+                                     round((x-r)/frame.shape[1], 4), 
+                                     round((x+r)/frame.shape[1], 4), 
+                                     round((y-r)/frame.shape[0], 4), 
+                                     round((y+r)/frame.shape[0], 4)])
                     holdsSaved += 1
+        
+        print(f"{holdsSaved} holds saved to {path}.")
 
     def loadImageIntoNumpyArray(self, path):
         """

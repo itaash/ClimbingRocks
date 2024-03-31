@@ -100,7 +100,7 @@ class PoseEstimatorThread(QThread):
 
         return
 
-    def recordClimb(self):
+    def recordClimb(self, threshold=0.3, buffer=0.05):
         """
         if all 4 limbs are above the lowest hold, the climber is in a valid position. Start recording the climb.
         Start 1 second timer to check if the climber is still in a valid position. If not, the climb is not in progress,
@@ -111,24 +111,26 @@ class PoseEstimatorThread(QThread):
         If yes, the climbFinished signal is emitted, and the climb is no longer in progress.
         """
         # Extract the relevant keypoints for both hands and feet. If a keypoint is not visible, set it to [None, None]
-        self.leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][2] > 0.3 else [None, None]
-        self.rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][2] > 0.3 else [None, None]
-        self.leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][2] > 0.3 else [None, None]
-        self.rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][2] > 0.3 else [None, None]
+        self.leftHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_wrist']][2] > threshold else [None, None]
+        self.rightHand = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_wrist']][2] > threshold else [None, None]
+        self.leftFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['left_ankle']][2] > threshold else [None, None]
+        self.rightFoot = self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][0:2] if self.keypoints[PoseEstimatorThread.usefulKeypointDict['right_ankle']][2] > threshold else [None, None]
         
         
         # save keypoints if the climb has begun or is in progress, regardless of whether all limbs are visible
         if self.climbBegun or self.climbInProgress:
-            centerOfGravity = self.calculateCenterOfGravity()
-            leftArmAngle, rightArmAngle = self.calculateArmAngles()
+            # save data if even one limb is visible
+            if any([None not in self.leftHand, None not in self.rightHand, None not in self.leftFoot, None not in self.rightFoot]):
+                centerOfGravity = self.calculateCenterOfGravity()
+                leftArmAngle, rightArmAngle = self.calculateArmAngles()
 
-            timestamp = int((time.time() * 1000) - self.startTime)
+                timestamp = int((time.time() * 1000) - self.startTime)
 
-            frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
-            for usefulKeypoint in PoseEstimatorThread.usefulKeypointDict.values():
-                frameRow.extend([round(self.keypoints[usefulKeypoint][1], 5), 
-                                 round(self.keypoints[usefulKeypoint][0], 5)])
-            self.keypointsData.append(frameRow)
+                frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
+                for usefulKeypoint in PoseEstimatorThread.usefulKeypointDict.values():
+                    frameRow.extend([round(self.keypoints[usefulKeypoint][1], 5), 
+                                    round(self.keypoints[usefulKeypoint][0], 5)])
+                self.keypointsData.append(frameRow)
 
         # Check if any limb is not visible. If so, return and do not alter the climb status
         if any([None in self.leftHand, None in self.rightHand, None in self.leftFoot, None in self.rightFoot]):
@@ -157,8 +159,8 @@ class PoseEstimatorThread(QThread):
             #                      round(self.keypoints[usefulKeypoint][0], 5)])
             # self.keypointsData.append(frameRow)
                 
-            # Check if both hands have been on or above the highest hold
-            if (self.leftHand[0] < (self.highestHoldY-0.05) and (self.rightHand[0] < (self.highestHoldY-0.05))):
+            # Check if both hands have been on or above the highest hold. increase the buffer if we want to check that the climber has reached the top of the wall
+            if (self.leftHand[0] < (self.highestHoldY-buffer) and (self.rightHand[0] < (self.highestHoldY-buffer))):
                 self.climbSuccessful = True # Climber has reached the top
                 self.climbInProgress = False
                 self.climbBegun = False
