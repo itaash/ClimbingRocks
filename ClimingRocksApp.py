@@ -15,7 +15,7 @@ from UI.HoldFindingScreen import HoldFindingScreen
 from UI.ClimbingScreen import ClimbingScreen
 from UI.ResultsScreen import ResultsScreen
 from DataCapture.CameraSender import CameraSender
-from DataCapture.CircularHoldFinder import HoldFindingThread
+from DataCapture.CircularHoldFinder import HoldFindingThread # Change to DataCapture.HoldFinder for normal climbing holds
 from DataCapture.PoseEstimator import PoseEstimatorThread
 from DataCapture.ForceReceiver import ForceReceivingThread
 from error import *
