@@ -46,21 +46,16 @@ class HoldFindingScreen(QWidget):
         self.clearAreaLabel.setStyleSheet("background-color: 'transparent';")
         # move the clear area image to the center of the screen
         self.clearAreaLabel.move((parent.width() - self.clearAreaLabel.width()) // 2,
-                                (parent.height() - self.clearAreaLabel.height()) // 4)
+                                ((parent.height() - self.clearAreaLabel.height()) *2)// 3)
 
         # Create status label
         self.statusLabel = QLabel(self)
-        self.statusLabel.setFixedSize((parent.width()*2)//5, parent.height()//6)
+        self.statusLabel.setFixedSize((parent.width())//4, parent.height()//5)
         # statusPixmap = QPixmap.scaledToWidth(QPixmap("UI/UIAssets/SearchingForHolds.png"), parent.width()//3, Qt.SmoothTransformation)
         # self.statusLabel.setPixmap(statusPixmap)
         self.statusLabel.setAlignment(Qt.AlignCenter)
-        self.statusLabel.setStyleSheet(" background-color: 'transparent';"
-                                        "font-size: 20px;"
-                                        "color: #ffffff;"
-                                        "border-radius: 45px;"
-                                        "border: 10px solid #222222;")
-        self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
-                                    self.parent.height() - self.statusLabel.height() - 40)
+        self.statusLabel.setStyleSheet(" background-color: 'transparent';")
+        self.statusLabel.move(parent.width() - self.statusLabel.width() - 40, 20)
 
         # Set up the camera sender
         self.cameraSender = parent.cameraSender
@@ -115,46 +110,18 @@ class HoldFindingScreen(QWidget):
             # self.holdsFoundSignal.emit
 
         if self.parent.holdFindingModelLoaded:
-            self.statusLabel.setFixedSize((self.parent.width()*1)//2, self.parent.height()//8)
-            self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
-                                    self.parent.height() - self.statusLabel.height() - 40)
+            # self.statusLabel.setFixedSize((self.parent.width()*1)//2, self.parent.height()//8)
+            # self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+            #                         self.parent.height() - self.statusLabel.height() - 40)
             if not self.holdsFound:
-                self.statusLabel.setText("Searching for Holds")
-                self.statusLabel.setStyleSheet(
-                    "background-color: #c58af9;"  # purple background
-                    "color: #ffffff;"
-                    "border-radius: 35px;"
-                    "border: 10px solid #962af4;"   # darker purple border
-                    "font-size: 40px;"
-                    "font-family: 'Bungee';"
-                    "font-weight: bold;"
-                )
+                self.statusLabel.setPixmap(QPixmap("UI/UIAssets/FindingHolds.png").scaledToWidth(self.statusLabel.width(), Qt.SmoothTransformation))
             else:
-                self.statusLabel.setText("Holds Found")
-                self.statusLabel.setStyleSheet(
-                    "background-color: #63D451;"  # green background
-                    "color: #ffffff;"
-                    "border-radius: 45px;"
-                    "border: 10px solid #3FB42D;" # darker green border
-                    "font-size: 40px;"
-                    "font-family: 'Bungee';"
-                    "font-weight: bold;"
-                )
+                self.statusLabel.setPixmap(QPixmap("UI/UIAssets/HoldsFound.png").scaledToWidth(self.statusLabel.width(), Qt.SmoothTransformation))
         else:
-            self.statusLabel.setFixedSize((self.parent.width()*2)//4, self.parent.height()//8)
-            self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
-                                    self.parent.height() - self.statusLabel.height() - 40)
-            self.statusLabel.setText("Loading Hold-Finding Model")
-            self.statusLabel.setStyleSheet(
-                "background-color: #147A8F;"  # blue background
-                "color: #ffffff;"
-                "border-radius: 45px;"
-                "border: 10px solid #3BC7E3;" # darker blue border
-                "font-size: 30px;"
-                "line-height: 0.5;"
-                "font-family: 'DMSans';"
-                "font-weight: bold;"
-            )
+            # self.statusLabel.setFixedSize((self.parent.width()*2)//4, self.parent.height()//8)
+            # self.statusLabel.move((self.parent.width() - self.statusLabel.width()) // 2,
+            #                         self.parent.height() - self.statusLabel.height() - 40)
+            self.statusLabel.setPixmap(QPixmap("UI/UIAssets/LoadingModel.png").scaledToWidth(self.statusLabel.width(), Qt.SmoothTransformation))
 
     @pyqtSlot(bool)
     def handleCameraConnection(self, connected):
@@ -180,7 +147,7 @@ class HoldFindingScreen(QWidget):
             self.findHoldsTimer = QTimer(self)
             self.findHoldsTimer.setSingleShot(True)
             self.findHoldsTimer.timeout.connect(self.findHolds)
-            self.findHoldsTimer.start(2500)
+            self.findHoldsTimer.start(4500)
             self.holdsTimerStarted = True
 
     @pyqtSlot()
