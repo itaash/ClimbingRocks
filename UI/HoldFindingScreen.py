@@ -221,7 +221,7 @@ class HoldFindingScreen(QWidget):
         print("Finding Holds...")
         self.detections = self.holdFindingThread.runInference(frame)
         minScore = 0.1
-        numHolds = 10
+        numHolds = 9
         frameWithHolds = self.holdFindingThread.getImageWithHoldsVolumes(frame, self.detections, minScore) # expects a numpy array
         
         # Convert image to QImage

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QStacked
 import math
 import time
 
-FRAME_SKIP = 5
+FRAME_SKIP = 4
 
 class PoseEstimatorThread(QThread):
     modelLoaded = pyqtSignal()
@@ -92,7 +92,7 @@ class PoseEstimatorThread(QThread):
         self.holdCoordinatesLoaded = True
 
         # since hold coordinates are sorted by distance from the top of the frame, the lowest hold is the last one in the list
-        self.lowestHoldY = holdCoordinates[1][4]    
+        self.lowestHoldY = holdCoordinates[0][4]    
         self.highestHoldY = holdCoordinates[-1][4]
 
         print("Lowest hold: ", self.lowestHoldY)
@@ -137,7 +137,7 @@ class PoseEstimatorThread(QThread):
             return
 
         # Check if all limbs are above the lowest hold
-        if self.isClimberInValidPosition() and not self.climbSuccessful:         # Climber is in a valid position, start recording the climb
+        if self.isClimberInValidPosition(buffer=0.02) and not self.climbSuccessful:         # Climber is in a valid position, start recording the climb
             if not self.climbBegun and not self.climbInProgress: # Climber was not in a valid position before, and is in a valid position now
                 # Start a timer to check if the climber is still in a valid position after 1 second
                 self.climbBegun = True
@@ -192,13 +192,13 @@ class PoseEstimatorThread(QThread):
         # Yes this is bad practice, but it's the only way to stop the climb from being reset if limbs are not visible
         # Checks if visible limbs are above the lowest hold. Returns falise if yes, otherwise true.
         visibleLimbFlag = True
-        if (not None in self.leftHand) and self.leftHand[0] < (self.lowestHoldY + buffer):
+        if (not (None in self.leftHand)) and self.leftHand[0] > (self.lowestHoldY + buffer):
             visibleLimbFlag = False
-        if (not None in self.rightHand) and self.rightHand[0] < (self.lowestHoldY + buffer):
+        if (not None in self.rightHand) and self.rightHand[0] > (self.lowestHoldY + buffer):
             visibleLimbFlag = False
-        if (not None in self.leftFoot) and self.leftFoot[0] < (self.lowestHoldY + buffer):
+        if (not None in self.leftFoot) and self.leftFoot[0] > (self.lowestHoldY + buffer):
             visibleLimbFlag = False
-        if (not None in self.rightFoot) and self.rightFoot[0] < (self.lowestHoldY + buffer):
+        if (not None in self.rightFoot) and self.rightFoot[0] > (self.lowestHoldY + buffer):
             visibleLimbFlag = False
 
         # self.climbBegun = False
@@ -379,8 +379,6 @@ class PoseEstimatorThread(QThread):
             if rightArmAngle>90:
                 rightArmAngle = abs(360-rightArmAngle)
             rightArmAngle = abs(round(rightArmAngle, 2))
-
-        print(leftArmAngle, rightArmAngle)
 
         return leftArmAngle, rightArmAngle
 

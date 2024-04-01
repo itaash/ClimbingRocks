@@ -57,7 +57,7 @@ class HoldFindingThread(QThread):
         print('HoldFinder done!')
         return circles
     
-    def saveDetections(self, detections, frame, maxHolds=20, threshold=0.3, path = 'data/holdCoordinates.csv'):
+    def saveDetections(self, detections, frame, maxHolds=20, threshold=0.3, path = 'data/holdCoordinates.csv', left=0.25, right=0.75):
         """
         Saves the locations of the detected holds to a file.  Holds are saved in the format ["holdNumber", "left", "right", "top", "bottom"], sorted by distance of the center of the hold from the bottom of the frame.
 
@@ -83,8 +83,7 @@ class HoldFindingThread(QThread):
             for i, (x, y, r) in enumerate(detections):
                 if holdsSaved >= maxHolds:
                     break
-                
-                if y > threshold * frame.shape[0]:
+                if x > (left * frame.shape[1]) and x < (right * frame.shape[1]):
                     writer.writerow([holdsSaved,
                                      round((x-r)/frame.shape[1], 4), 
                                      round((x+r)/frame.shape[1], 4), 

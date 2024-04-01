@@ -38,7 +38,7 @@ def detect_circles(frame):
 
 def main():
     # Open webcam
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     if not cap.isOpened():
         print("Error: Couldn't open webcam")
