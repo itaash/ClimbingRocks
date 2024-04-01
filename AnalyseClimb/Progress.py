@@ -229,7 +229,7 @@ def visualiseProgress(climbData, holdsCoordinates, climbSuccessful):
     climbing_data = preprocess_data(climbData)
 
     if len(climbing_data) < 2:
-        img = f"UI/UIAssets/progress/progress20.png"
+        img = f"UI/UIAssets/progress/noclimb.png"
 
     else:
         hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
@@ -238,9 +238,9 @@ def visualiseProgress(climbData, holdsCoordinates, climbSuccessful):
             img = f"UI/UIAssets/progress/progress100.png"
 
         elif 0 <= hold_score < 20:
-            img = f"UI/UIAssets/progress/progress20.png"
+            img = f"UI/UIAssets/progress/progressr20.png"
         elif 20 <= hold_score < 40:
-            img = f"UI/UIAssets/progress/progress40.png"
+            img = f"UI/UIAssets/progress/progressy40.png"
         elif 40 <= hold_score < 60:
             img = f"UI/UIAssets/progress/progress60.png"
         elif 60 <= hold_score < 80:

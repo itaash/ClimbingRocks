@@ -14,22 +14,23 @@ def calculatePressure(climbData):
     Returns:
         list of scores, each score represents a submetric
     """
+
     # TODO: implement this
     # currently returns a list of zeros as a placeholder for the scores so other parts of the app can be tested
-    return [100, 100, 100, 0, 0]
+    
+    return [0, 0, 0, 0, 0]
 
 def visualisePressure(climbData, progressSubmetrics):
     
-    climbing_data = preprocess_data(climbData)
 
-    if len(climbing_data) < 2:
-        img = f"UI/UIAssets/progress/progress20.png"
+    strength = 0
+
+    if strength == 0:
+        img = f"UI/UIAssets/pressure/noclimb_presh.png"
     
     else:
 
     #REplace will calling the strength score
-        
-        strength = 100
 
         if 0 <= strength < 25:
             img = f"UI/UIAssets/pressure/pressure20.png"

@@ -249,7 +249,7 @@ def visualisePosition(climbData):
     climbing_data = preprocess_data(climbData)
 
     if len(climbing_data) < 2:
-        img = f"UI/UIAssets/position/Position_0_30.png"
+        img = f"UI/UIAssets/position/noclimb_position.png"
 
     else:
         arm_score = measure_arm_angle(climbing_data)
