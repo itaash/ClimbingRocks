@@ -261,9 +261,11 @@ def visualisePosition(climbData):
         elif 40<= arm_score < 60:
             img = f"UI/UIAssets/position/Position_60_90.png"
         elif 60<= arm_score < 80:
-            img = f"UI/UIAssets/position/Position_105_135.png"
+            img = f"UI/UIAssets/position/Position_90_120.png"
+        elif 80<= arm_score < 100:
+            img = f"UI/UIAssets/position/Position_120_150.png"
         else:
-            img = f"UI/UIAssets/position/Position_135_165.png"
+            img = f"UI/UIAssets/position/Position_150_180.png"
 
     return img
 
