@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.currentClimber = ""
         self.numHolds = 9
         self.numForceSensors = 9
-        self.poseEstimationModel = "lightning"
+        self.poseEstimationModel = "thunder"
 
         # flags
         self.firstFrameReceived = False

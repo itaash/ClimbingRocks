@@ -14,7 +14,7 @@ class ForceReceivingThread(QThread):
         self.parent = parent
         self.recording = False
 
-        self.connectToArduino("COM3", 9600)
+        self.connectToArduino("COM3", 115200)
 
         self.startRecordingFlag = False # Flag to start recording force data
         self.recording = False # Flag to indicate if force data is being recorded
@@ -53,8 +53,10 @@ class ForceReceivingThread(QThread):
         if not climbStarted:
             # Clear the force list if climb has not started
             self.forceList.clear()
+            print("Cleared force data")
         else:
             self.startTime = time.time() * 1000
+            print("Started recording force data")
                 
     @pyqtSlot(bool)
     def stopRecording(self, climbSuccessfull):
@@ -62,6 +64,8 @@ class ForceReceivingThread(QThread):
         Stops receiving force data from the Arduino. Saves the force list to a file.
         """
         self.recording = False
+
+        print("Force data recording ended")
 
         if self.connected:
             # self.ser.close()
@@ -97,9 +101,7 @@ class ForceReceivingThread(QThread):
                 if len(forces) == self.numHolds:
                     # Append force values to the force list
                     self.forceList.append([(time.time() * 1000) - self.startTime] + forces)
-                    time.sleep(0.1)
-                else:
-                    print("Invalid force data:", forceData)
+                    # time.sleep(0.1)
             
             time.sleep(0.1) # Sleep for 100ms if not recording or not connected to the Arduino to avoid busy waiting
 

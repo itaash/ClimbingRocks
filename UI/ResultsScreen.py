@@ -455,7 +455,7 @@ if __name__ == "__main__":
     window.setFont(QFont("DM Sans"))
     window.setStyleSheet("background-color: #222222; font-size: 20px; color: #ffffff;")
     
-    window.resultsScreen = ResultsScreen("Romiro", False, window)
+    window.resultsScreen = ResultsScreen("itaash Fails", False, window)
     window.setCentralWidget(window.resultsScreen)
 
     

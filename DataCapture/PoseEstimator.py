@@ -160,7 +160,7 @@ class PoseEstimatorThread(QThread):
             # self.keypointsData.append(frameRow)
                 
             # Check if both hands have been on or above the highest hold. increase the buffer if we want to check that the climber has reached the top of the wall
-            if (self.leftHand[0] < (self.highestHoldY-buffer) and (self.rightHand[0] < (self.highestHoldY-buffer))):
+            if (self.leftHand[0] < (self.highestHoldY-0.03) and (self.rightHand[0] < (self.highestHoldY-0.03))):
                 self.climbSuccessful = True # Climber has reached the top
                 self.climbInProgress = False
                 self.climbBegun = False
