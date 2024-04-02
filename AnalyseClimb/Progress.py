@@ -141,7 +141,7 @@ def calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful):
 
         highest_reach = min(left_highest_reach, right_highest_reach)
 
-        reach = 100 - highest_reach*100
+        reach = 100 - highest_reach*125
     
     #if farthest_left == farthest_right == total_holds:  # Climber completed the route
         #return 100  # Return the maximum possible score (100)

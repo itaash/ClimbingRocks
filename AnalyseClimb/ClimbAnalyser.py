@@ -10,9 +10,9 @@ class ClimbAnalyserThread(QThread):
 
     metricsWeights = {"pressure": 0.3, "positioning": 0.4, "progress": 0.3}
 
-    submetricsLabels = {"pressure": ["Strength", "Adjustments"],
+    submetricsLabels = {"pressure": ["Efficiency", "Adjustments"],
                         "positioning": ["Smoothness", "Arm Bend"],
-                        "progress": ["Completion", "Path Finding"]
+                        "progress": ["Completion", "Pathfinding"]
     }
 
     submetricsWeights = {"pressure": [0.5, 0.5],

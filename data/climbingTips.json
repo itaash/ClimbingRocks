@@ -9,7 +9,7 @@
       "SmoothTransitions": "No",
       "QuickDecisionMaking": "No"
     },
-    "Path Finding": {
+    "Pathfinding": {
       "TrustGripStrength": "Great effort! Trust your grip strength and commit to each move confidently. This will save energy!",
       "VisualizeSequence": "Nice climb! Work on transitioning smoothly between holds to maintain a consistent pace throughout the climb.",
       "PacingStrategy": "Good work! Practice quick decision-making to choose the most effective handholds without hesitation"
@@ -24,7 +24,7 @@
       "AnkleFlexibility": "No",
       "WeightDistribution": "No"
     },
-    "Strength": {
+    "Efficiency": {
       "StrengthTraining": "Great work up there! Next time, practice placing your hands once and not letting go until you make your next move.",
       "BodyPositioning": "Nice climb! Focus on body positioning to utilize core strength and reduce reliance on arm strength alone.",
       "IncreaseDifficulty": "Cool moves, climber! A more even distribution of your weight will reduce fatigue on your individual arms and legs."
