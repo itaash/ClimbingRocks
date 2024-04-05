@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
             if not self.firstFrameReceived:
                 for i in range(self.splashScreen.getProgress(), 95):
                     self.splashScreen.setProgress(i)
-                    time.sleep(0.01)
+                    time.sleep(0.015)
                 self.firstFrameReceived = True
                 self.lobbyScreen = LobbyScreen(self)
                 self.splashScreen.setParent(None)

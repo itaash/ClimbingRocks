@@ -3,6 +3,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from AnalyseClimb import Pressure, Positioning, Progress
 import pandas as pd, numpy as np, json, random
+import csv
 
 
 class ClimbAnalyserThread(QThread):
@@ -172,27 +173,34 @@ class ClimbAnalyserThread(QThread):
     def saveClimbRecord(self):
         """
         saves the climb record to a the database
-        climb record includes the date-time, climber name, climbing score, metrics and submetrics scores
+        climb record includes the climber name, climbing score, and metrics scores
 
         work in progress
         """
-        leaderBoard = pd.read_csv(self.leaderBoardDirectory)
-        leaderBoard = pd.DataFrame(leaderBoard)
-
-        if len(leaderBoard) == 0:
-            columnsList = ["DateTime", "Climber", "Score"]
-            for metric in ClimbAnalyserThread.metricsWeights.keys():
-                columnsList.append(metric)
-                for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
-                    columnsList.append(submetric)
-            leaderBoard = pd.DataFrame(columns=columnsList)
 
         newRecord = []
-        for metric in ClimbAnalyserThread.metricsWeights.keys():
-            newRecord[metric] = self.metricsWeights[metric] * self.pressureSubmetrics[0] + \
-                                self.metricsWeights[metric] * self.positionSubmetrics[0] + \
-                                self.metricsWeights[metric] * self.progressSubmetrics[0]
-            for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
-                newRecord[submetric] = self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.pressureSubmetrics[0] + \
-                                        self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.positionSubmetrics[0] + \
-                                        self.submetricsWeights[metric][ClimbAnalyserThread.submetricsLabels[metric].index(submetric)] * self.progressSubmetrics[0]
+        newRecord.append(self.climberName)
+        newRecord.append(self.getClimbingScore())
+
+        if 'pressure' in ClimbAnalyserThread.metricsWeights.keys():
+            newRecord.append(self.pressureSubmetrics[0])
+        
+        if 'positioning' in ClimbAnalyserThread.metricsWeights.keys():
+            newRecord.append(self.positionSubmetrics[0])
+
+        if 'progress' in ClimbAnalyserThread.metricsWeights.keys():
+            newRecord.append(self.progressSubmetrics[0])
+
+
+        with open(self.leaderBoardDirectory, 'a', newline='') as f:
+            writer = csv.writer(f)
+            # if len(f.readlines()) == 0:
+            #     columnsList = ["name", "score"]
+            #     for metric in ClimbAnalyserThread.metricsWeights.keys():
+            #         columnsList.append(metric)
+            #         for submetric in ClimbAnalyserThread.submetricsLabels[metric]:
+            #             columnsList.append(submetric)
+            #     writer.writerow(columnsList)
+            writer.writerow(newRecord)
+
+        return

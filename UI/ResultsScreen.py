@@ -155,6 +155,9 @@ class ResultsScreen(QWidget):
         self.positioningWidget.updateImage(positioningVisualisation)
         self.positioningWidget.updateScore(positioningSubmetrics)
 
+        # save the climbing score to the leaderboard
+        self.climbAnalyser.saveClimbRecord()
+
         self.tipDialog = TipDialog(lowestWeightedSubmetric, climbingTip, self)
         self.tipHBoxLayout = QHBoxLayout()
         self.tipHBoxLayout.addWidget(self.tipDialog, alignment=Qt.AlignmentFlag.AlignCenter)

@@ -52,7 +52,7 @@ def calculatePressure(climbData):
     # TODO: implement this
     # currently returns a list of zeros as a placeholder for the scores so other parts of the app can be tested
     
-    return [round(combined, 2), round(efficiency_score, 2), round(adjustment_score, 2), 0, 0]
+    return [round(combined), round(efficiency_score), round(adjustment_score)]
 
 def visualisePressure(climbData, progressSubmetrics):
 
