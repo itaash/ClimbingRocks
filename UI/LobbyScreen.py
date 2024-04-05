@@ -92,12 +92,12 @@ class LobbyScreen(QWidget):
         # leaderboardScrollArea.setStyleSheet("border: 0px")
         leaderboardScrollWidget = QWidget()
         leaderboardScrollArea.setWidget(leaderboardScrollWidget)
-        leaderboardScrollLayout = QVBoxLayout(leaderboardScrollWidget)
-        leaderboardScrollLayout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        leaderboardScrollLayout.setSpacing(7)
+        self.leaderboardScrollLayout = QVBoxLayout(leaderboardScrollWidget)
+        self.leaderboardScrollLayout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self.leaderboardScrollLayout.setSpacing(7)
 
         # Populate the leaderboard from CSV
-        self.populateLeaderboard(leaderboardScrollLayout)
+        self.populateLeaderboard()
         
         # Customize the scroll bar style
         scroll_bar_style = """
@@ -208,9 +208,14 @@ class LobbyScreen(QWidget):
             self.callback = None
 
 
-    def populateLeaderboard(self, layout):
+    def populateLeaderboard(self):
         # Read data from CSV file and populate the leaderboard widgets
         filePath = "data/leaderboard.csv"
+        layout = self.leaderboardScrollLayout
+
+        # remove all widgets from the layout
+        for i in reversed(range(layout.count())): 
+            layout.itemAt(i).widget().setParent(None)
 
         with open(filePath, 'r') as file:
             lines = file.readlines()
@@ -263,6 +268,13 @@ class LobbyScreen(QWidget):
         # Add your logic to transition to the next screen or perform other actions
 
     getClimberName = lambda self: self.nameInput.text()
+
+    def updateLeaderboard(self):
+        """
+        called when the user finishes climbing to update the leaderboard
+        """
+        # Get the user's name and score
+        
 
     def reset(self):
         self.nameInput.clear()

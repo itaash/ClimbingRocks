@@ -181,6 +181,7 @@ class MainWindow(QMainWindow):
     def goToLobbyScreen(self):
         self.resultsScreen.setParent(None)
         self.resultsScreen.reset()
+        self.lobbyScreen.populateLeaderboard()
         self.setCentralWidget(self.lobbyScreen)
         
         pass
