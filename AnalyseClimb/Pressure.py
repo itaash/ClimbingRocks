@@ -29,7 +29,7 @@ def calculate_adjustments(df):
             start_index = non_zero_indices[i]
             end_index = non_zero_indices[i + 1] + 1
             non_zero_values = df[column][start_index:end_index]
-            if len(non_zero_values) > 1:  # Calculate standard deviation only if there are more than one non-zero value
+            if len(non_zero_values) > 11:  # Calculate standard deviation only if there are more than one non-zero value
                 std_dev = np.std(non_zero_values)
                 if std_dev > largest_std_dev:
                     largest_std_dev = std_dev
@@ -48,7 +48,7 @@ def calculatePressure(climbData):
     # TODO: implement this
     # currently returns a list of zeros as a placeholder for the scores so other parts of the app can be tested
     
-    return [round(combined, 2), round(adjustment_score, 2), round(efficiency_score, 2), 0, 0]
+    return [round(combined, 2), round(efficiency_score, 2), round(adjustment_score, 2), 0, 0]
 
 def visualisePressure(climbData, progressSubmetrics):
 
