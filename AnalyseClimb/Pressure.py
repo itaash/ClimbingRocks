@@ -39,6 +39,10 @@ def calculatePressure(climbData):
 
     sd = calculate_adjustments(climbData)
     adjustment_score = 100-sd
+    if adjustment_score < 0:
+        adjustment_score = 2
+    elif adjustment_score > 100:
+        adjustment_score = 98
 
     efficiency = calculate_ratio(climbData)
     efficiency_score = efficiency*100
