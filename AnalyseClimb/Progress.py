@@ -141,7 +141,10 @@ def calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful):
 
         highest_reach = min(left_highest_reach, right_highest_reach)
 
-        reach = 100 - highest_reach*125
+        if highest_reach < 0:
+            highest_reach = 0
+
+        reach = 100 - highest_reach*125 #COMPLETION SCALE VALUE
     
     #if farthest_left == farthest_right == total_holds:  # Climber completed the route
         #return 100  # Return the maximum possible score (100)
@@ -155,7 +158,7 @@ def calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful):
 
 def calculate_hesitation_score(results_left, results_right):
 
-    error_factor = 2  # TO BE CHANGED WHEN TESTING
+    error_factor = 5 # PATHFINDING SCALE FACTOR
 
     # Calculate the average time spent on each hold for left hand
     results_left['Average_Time_Left(ms)'] = results_left['Total_Time_Left(ms)'] / (results_left['End_Timestamp_Left(ms)'] - results_left['Start_Timestamp_Left(ms)'])
@@ -211,7 +214,7 @@ def calculateProgress(climbData, holdsCoordinates, climbSuccessful):
         hesitation_score = calculate_hesitation_score(result_left, result_right)
         #hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
         hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
-        climbing_duration_score = calculate_time_score(timeclimb)
+        climbing_duration_score = calculate_time_score(timeclimb)*2
 
         combined_score = calculate_combined_score(hesitation_score, hold_score)
         print(combined_score, hold_score, climbing_duration_score, hesitation_score )
