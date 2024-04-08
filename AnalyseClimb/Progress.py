@@ -192,6 +192,11 @@ def calculate_time_score(timeclimb):
     return timeclimb
 
 
+def hold_number_force(forceData):
+    columns_count = (forceData > 3000).any(axis=0).sum()
+    return columns_count
+
+
 # Function to calculate combined score by averaging climbing duration score and hesitation score
 def calculate_combined_score(hesitation_score, hold_score):
     
@@ -199,7 +204,7 @@ def calculate_combined_score(hesitation_score, hold_score):
 
     
 
-def calculateProgress(climbData, holdsCoordinates, climbSuccessful):
+def calculateProgress(climbData, holdsCoordinates, climbSuccessful, forceData):
     threshold_distance = 10 # specify the threshold distance for proximity to the holds
 
     climbing_data = preprocess_data(climbData)  # Preprocess NaN values in the DataFrame
@@ -211,14 +216,22 @@ def calculateProgress(climbData, holdsCoordinates, climbSuccessful):
         result_left, result_right, farthest_left, farthest_right = calculate_time_on_holds(climbing_data, holdsCoordinates, threshold_distance)
         timeclimb = measure_climbing_duration(climbing_data)
 
+
+        force_progress = hold_number_force(forceData)
+        pathfinding_score_force = force_progress*10 + 10
+        if pathfinding_score_force > 100:
+            pathfinding_score_force = 100
+
         hesitation_score = calculate_hesitation_score(result_left, result_right)
         #hold_score = calculate_hold_score(farthest_left, farthest_right, total_holds = 10)
         hold_score = calculate_hold_score(climbing_data, holdsCoordinates, climbSuccessful)
         climbing_duration_score = calculate_time_score(timeclimb)*2
 
-        combined_score = calculate_combined_score(hesitation_score, hold_score)
-        print(combined_score, hold_score, climbing_duration_score, hesitation_score )
-        return [round(combined_score), round(hold_score), round(climbing_duration_score), round(hesitation_score)]
+        #pathfinding_score = max(pathfinding_score_force, hold_score)
+
+        combined_score = calculate_combined_score(pathfinding_score_force, hold_score)
+        print(combined_score, hold_score, climbing_duration_score, hesitation_score)
+        return [round(combined_score), round(hold_score), round(pathfinding_score_force), round(climbing_duration_score)]
 
 def sum_left_right(result_left, result_right, holdsCoordinates):
 

@@ -18,7 +18,7 @@ class ClimbAnalyserThread(QThread):
 
     submetricsWeights = {"pressure": [0.5, 0.5],
                          "positioning": [0.5, 0.5],
-                         "progress": [0.7, 0.3]
+                         "progress": [0.5, 0.5]
     }
 
     def __init__(self, climberName, climbSuccessful, parent):
@@ -66,7 +66,7 @@ class ClimbAnalyserThread(QThread):
         self.positionVisualisation = Positioning.visualisePosition(climbData)
 
         # Calculate progress
-        self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates, self.climbSuccessful)
+        self.progressSubmetrics = Progress.calculateProgress(climbData, holdsCoordinates, self.climbSuccessful, forceData)
         self.progressVisualisation = Progress.visualiseProgress(climbData, holdsCoordinates, self.climbSuccessful)
 
         # calculte the lowest weighted submetric and get a climbing tip based on that submetric

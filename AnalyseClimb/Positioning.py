@@ -45,7 +45,7 @@ def measure_arm_angle(data):
     #low_angle_proportion = num_low_angles / num_samples if num_samples > 0 else 0
 
     # Assign score based on the proportion of low arm angles
-    score = min(np.mean(data["Left Arm Angle"]),np.mean(data["Right Arm Angle"]))
+    score = (np.mean(data["Left Arm Angle"]) + np.mean(data["Right Arm Angle"]))/2
 
     if score >= 180:
         score = 100
@@ -147,18 +147,22 @@ def calculate_time_on_holds(climb_data, holdsCoordinates, threshold_distance=2):
     return result_df_left, result_df_right
 
 def centre_of_gravity(climb_data):
+    window_size = 5
     CoG_X = climb_data["Center of Gravity X"]
     CoG_Y = climb_data["Center of Gravity Y"]
 
     CoG_X_mean_difference = CoG_X.diff()
     CoG_Y_mean_difference = CoG_Y.diff()
 
+    rolling_std_CoG_X = CoG_X.rolling(window=window_size).std()
+    rolling_std_CoG_Y = CoG_Y.rolling(window=window_size).std()
+
     std_CoG_X = np.std(CoG_X)
     std_CoG_Y = np.std(CoG_Y)
 
     #smoothness = max(std_CoG_X, std_CoG_Y)*100
 
-    smoothness = 100 - max(np.mean(CoG_X_mean_difference), np.mean(CoG_Y_mean_difference))*11000 #SMOOTHNESS SCALE VALUE
+    smoothness = 100 - max(np.mean(rolling_std_CoG_X), np.mean(rolling_std_CoG_Y))*1500 #SMOOTHNESS SCALE VALUE
     if smoothness < 0:
         smoothness = 0
     elif smoothness > 100:

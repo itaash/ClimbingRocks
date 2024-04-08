@@ -183,6 +183,7 @@ class MainWindow(QMainWindow):
         self.resultsScreen.reset()
         self.lobbyScreen.populateLeaderboard()
         self.setCentralWidget(self.lobbyScreen)
+        self.forceReceivingThread.connectToArduino()
         
         pass
 
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # app.setWindowIcon(app.style().standardIcon(getattr(QStyle, 'SP_DesktopIcon')))
     mainWindow = MainWindow()
-    # mainWindow.showFullScreen()
-    mainWindow.show()
+    mainWindow.showFullScreen()
+    # mainWindow.show()
     
     sys.exit(app.exec_())

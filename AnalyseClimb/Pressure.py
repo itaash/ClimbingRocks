@@ -9,6 +9,12 @@ def calculate_ratio(df):
     # Ignore the first column
     df = df.iloc[:, 1:]
 
+    
+
+    for i in df:
+        df[i] = detect_spikes(df[i])
+
+    df["hold7"] = df["hold7"]*2.0/3.0
     # Take the sum of the first three columns
     sum_first_three = df.iloc[:, :3].sum().sum()
 
@@ -20,20 +26,27 @@ def calculate_ratio(df):
 
     return ratio
 
+def detect_spikes(column):
+    for i in range(1, len(column) - 1):
+        value = column[i]
+        if isinstance(value, (int, float)) and abs(value - column[i-1]) > 8000 and abs(value - column[i+1]) > 8000:
+            column[i] = column[i+1]
+    return column
 
 def calculate_adjustments(df):
     largest_std_dev = 0
     for column in df.columns[1:]:  # Skip the first column which is assumed to be time
+        df[column] = detect_spikes(df[column])
         non_zero_indices = df[column][df[column] != 0].index
         for i in range(len(non_zero_indices) - 1):
             start_index = non_zero_indices[i]
             end_index = non_zero_indices[i + 1] + 1
             non_zero_values = df[column][start_index:end_index]
-            if len(non_zero_values) > 11:  # Calculate standard deviation only if there are more than one non-zero value
+            if len(non_zero_values) > 6:  # Calculate standard deviation only if there are more than one non-zero value
                 std_dev = np.std(non_zero_values)
                 if std_dev > largest_std_dev:
                     largest_std_dev = std_dev
-    return largest_std_dev
+    return largest_std_dev/1000*2.5
 
 def calculatePressure(climbData):
 

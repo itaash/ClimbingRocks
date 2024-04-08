@@ -14,7 +14,7 @@ class ForceReceivingThread(QThread):
         self.parent = parent
         self.recording = False
 
-        self.connectToArduino("COM3", 115200)
+        self.connectToArduino()
 
         self.startRecordingFlag = False # Flag to start recording force data
         self.recording = False # Flag to indicate if force data is being recorded
@@ -26,10 +26,15 @@ class ForceReceivingThread(QThread):
     def run(self):
         self.recordForce()
 
-    def connectToArduino(self, port, baudrate):
+    def connectToArduino(self):
         """
         Connects to the Arduino using the given port and baudrate.
         """
+        port = "/dev/ttyUSB0"
+        baudrate = 115200
+        if self.connected:
+            self.ser.close()
+
         try:
             self.ser = serial.Serial(port, baudrate)
             # time.sleep(1) # need to wait for the arduino to initialize
