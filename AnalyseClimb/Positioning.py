@@ -162,7 +162,8 @@ def centre_of_gravity(climb_data):
 
     #smoothness = max(std_CoG_X, std_CoG_Y)*100
 
-    smoothness = 100 - max(np.mean(rolling_std_CoG_X), np.mean(rolling_std_CoG_Y))*1500 #SMOOTHNESS SCALE VALUE
+    smoothness = 100 - (np.mean(rolling_std_CoG_X)*2 + np.mean(rolling_std_CoG_Y))*1000
+    smoothness = 100 * 1/(1+2.73**(-(smoothness/10) +5))
     if smoothness < 0:
         smoothness = 0
     elif smoothness > 100:

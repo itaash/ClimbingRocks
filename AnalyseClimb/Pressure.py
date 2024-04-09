@@ -42,15 +42,16 @@ def calculate_adjustments(df):
             start_index = non_zero_indices[i]
             end_index = non_zero_indices[i + 1] + 1
             non_zero_values = df[column][start_index:end_index]
-            if len(non_zero_values) > 6:  # Calculate standard deviation only if there are more than one non-zero value
+            if len(non_zero_values) > 2:  # Calculate standard deviation only if there are more than one non-zero value
                 std_dev = np.std(non_zero_values)
                 if std_dev > largest_std_dev:
                     largest_std_dev = std_dev
-    return largest_std_dev/1000*2.5
+    return largest_std_dev/1000*5.25
 
 def calculatePressure(climbData):
 
     sd = calculate_adjustments(climbData)
+    adjustment_score = 100 * 1/(1+2.73**(-(sd/10) + 5))
     adjustment_score = 100-sd
     if adjustment_score < 0:
         adjustment_score = 2

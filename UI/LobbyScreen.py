@@ -208,7 +208,7 @@ class LobbyScreen(QWidget):
             self.callback = None
 
 
-    def populateLeaderboard(self):
+    def populateLeaderboard(self, numWidgets = 50):
         # Read data from CSV file and populate the leaderboard widgets
         filePath = "data/leaderboard.csv"
         layout = self.leaderboardScrollLayout
@@ -235,9 +235,9 @@ class LobbyScreen(QWidget):
         # Sort data by score in descending order
         dataList.sort(key=itemgetter(1), reverse=True)\
         
-        if len(dataList) > 20:
-            dataList = dataList[:20]
-            numWidgets = 20
+        if len(dataList) > numWidgets:
+            dataList = dataList[:numWidgets]
+            numWidgets = numWidgets
         else:
             numWidgets = len(dataList)
 
