@@ -119,18 +119,23 @@ class PoseEstimatorThread(QThread):
         
         # save keypoints if the climb has begun or is in progress, regardless of whether all limbs are visible
         if self.climbBegun or self.climbInProgress:
+
+            timestamp = int((time.time() * 1000) - self.startTime)
+
             # save data if even one limb is visible
             if any([None not in self.leftHand, None not in self.rightHand, None not in self.leftFoot, None not in self.rightFoot]):
                 centerOfGravity = self.calculateCenterOfGravity()
                 leftArmAngle, rightArmAngle = self.calculateArmAngles()
 
-                timestamp = int((time.time() * 1000) - self.startTime)
 
                 frameRow = [timestamp, centerOfGravity[0], centerOfGravity[1], leftArmAngle, rightArmAngle]
                 for usefulKeypoint in PoseEstimatorThread.usefulKeypointDict.values():
                     frameRow.extend([round(self.keypoints[usefulKeypoint][1], 5), 
                                     round(self.keypoints[usefulKeypoint][0], 5)])
                 self.keypointsData.append(frameRow)
+
+            if timestamp>120000:
+                self.completeClimbDueToTimeout()
 
         # Check if any limb is not visible. If so, return and do not alter the climb status
         if any([None in self.leftHand, None in self.rightHand, None in self.leftFoot, None in self.rightFoot]):
@@ -144,7 +149,7 @@ class PoseEstimatorThread(QThread):
                 self.climbBegunSignal.emit(self.climbBegun)
                 self.startTime = time.time() * 1000 # in milliseconds
                 timer = QTimer()
-                timer.singleShot(2000, lambda: self.validateClimb())
+                timer.singleShot(1500, lambda: self.validateClimb())
                 print ("Climb begun.")
 
             # # Store keypoints and timestamp - moved to below to separate the recording of keypoints from the adjustment of climb status
@@ -205,6 +210,7 @@ class PoseEstimatorThread(QThread):
         if visibleLimbFlag:
             self.climbInProgress = True
             self.climbInProgressSignal.emit(True)
+            
             print("Climb in progress!")
         else:
             self.climbInProgress = False
@@ -491,7 +497,6 @@ class MainWindow(QWidget):
         frame = self.cameraSender.getFrame()
         if self.poseEstimatorModelLoaded:
             frame = self.drawSkeleton(frame, self.keypoints, self.centerOfGravity)
-
         # Convert image to QImage and display it in the QLabel
         frame = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_BGR888)
         # Convert the QImage to a QPixmap
