@@ -46,7 +46,7 @@ def calculate_adjustments(df):
                 std_dev = np.std(non_zero_values)
                 if std_dev > largest_std_dev:
                     largest_std_dev = std_dev
-    return largest_std_dev/1000*5.25
+    return largest_std_dev/1000*6
 
 def calculatePressure(climbData):
 
