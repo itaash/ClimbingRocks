@@ -13,7 +13,6 @@ Welcome to the Climbing Rocks App! This application is designed to to automatica
 
 ## Introduction
 
-[Provide a brief introduction to the Climbing Rocks App. Explain what it does and who it is for.]
 The application is designed in PyQt. It uses a TensorFlow model to detect climbing holds, TensorFlow MoveNet to track the user's movements, and force sensors in each climbing hold to record the user's force data. 
 
 The analysis of climb data is done using custom algorithms that evaluate the user's performance based on their force and position data. The app provides visualizations of the user's climb, like a visualisation of their arm angle, progress through the climb, and an indicatator of how theyt used their force. The app also provides personalized climbing tips based on the user's weakest metric.
